@@ -1,0 +1,192 @@
+/* src/components/auth.css */
+
+.auth-container {
+  display: flex;
+  min-height: calc(100vh - 70px); /* Adjust based on navbar height */
+  background-color: var(--color-bg-light);
+}
+
+/* Main section (larger) */
+.auth-main {
+  flex: 2;
+  background-color: var(--color-bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+}
+
+/* Secondary section (smaller) */
+.auth-secondary {
+  flex: 1;
+  background-color: var(--color-primary);
+  color: var(--color-primary-text);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-xl);
+}
+
+.auth-content {
+  max-width: 450px;
+  width: 100%;
+}
+
+.auth-title {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.auth-subtitle {
+  font-family: var(--font-body);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.9;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.form-group label {
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-base);
+}
+
+.input-with-icon {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: var(--spacing-sm);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-primary);
+  opacity: 0.6;
+}
+
+.input-with-icon input {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) calc(var(--spacing-sm) * 3);
+  border: var(--border-size) solid var(--color-bg-dark);
+  border-radius: var(--radius-input);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  background-color: var(--color-bg-light);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.input-with-icon input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(var(--color-primary), 0.2);
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-xs);
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.forgot-password {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-size: var(--font-size-base);
+  transition: color 0.3s ease;
+}
+
+.forgot-password:hover {
+  color: var(--color-secondary);
+  text-decoration: underline;
+}
+
+.auth-button {
+  background-color: var(--color-primary);
+  color: var(--color-primary-text);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-button);
+  font-family: var(--font-button);
+  font-weight: var(--button-font-weight);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  margin-top: var(--spacing-md);
+  transition: background-color 0.3s ease;
+}
+
+.auth-button:hover {
+  background-color: var(--color-secondary);
+}
+
+.auth-alt-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background-color: transparent;
+  color: var(--color-primary-text);
+  border: 2px solid var(--color-primary-text);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-button);
+  font-family: var(--font-button);
+  font-weight: var(--button-font-weight);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.auth-alt-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateX(5px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .auth-container {
+    flex-direction: column;
+  }
+  
+  .auth-main, .auth-secondary {
+    flex: none;
+    width: 100%;
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+  
+  /* Login page: Secondary section (New Here?) should be at the bottom */
+  .login-container .auth-secondary {
+    order: 1; /* Show the secondary section last on mobile */
+  }
+  
+  /* Register page: Secondary section (Already Have an Account?) should be at the bottom */
+  .register-container .auth-secondary {
+    order: 1; /* Show the secondary section last on mobile */
+  }
+  
+  .auth-title {
+    font-size: 2rem;
+  }
+  
+  .auth-content {
+    max-width: 100%;
+  }
+}

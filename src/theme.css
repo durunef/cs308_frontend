@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    /* === Base Colors (Background & Text) === */
+    --color-bg-light: oklch(97% 0.0035 67.78); /* Lightest background */
+    --color-bg: oklch(95% 0.0081 61.42); /* Default background */
+    --color-bg-dark: oklch(90% 0.0081 61.42); /* Darker background */
+    --color-text-primary: oklch(40% 0.0081 61.42); /* Main text color */
+  
+    /* === Primary Brand Colors === */
+    --color-primary: oklch(41% 0.112 45.904); /* Primary brand color */
+    --color-primary-text: oklch(95% 0.038 75.164); /* Text on primary elements */
+  
+    /* === Secondary Colors (Highlights & UI Accents) === */
+    --color-secondary: oklch(26% 0.079 36.259); /* Secondary accent */
+    --color-secondary-text: oklch(95% 0.038 75.164); /* Text on secondary elements */
+  
+    /* === Accent Colors (CTA & Interactive) === */
+    --color-accent: oklch(26% 0.079 36.259);
+    --color-accent-text: oklch(95% 0.038 75.164);
+  
+    /* === Neutral Colors (Cards, Containers, Shadows) === */
+    --color-card-bg: oklch(20% 0 0);
+    --color-card-text: oklch(95% 0.038 75.164);
+  
+    /* === Status Colors (Info, Success, Warning, Error) === */
+    --color-info: oklch(60% 0.126 221.723); /* Informational alerts */
+    --color-info-text: oklch(30.39% 0.1148 241.68);
+    
+    --color-success: oklch(64% 0.2 131.684); /* Success messages */
+    --color-success-text: oklch(23.92% 0.0901 136.87);
+  
+    --color-warning: oklch(66% 0.179 58.318); /* Warnings & notifications */
+    --color-warning-text: oklch(43.92% 0.1085 80);
+  
+    --color-error: oklch(44% 0.177 26.899); /* Errors & validation */
+    --color-error-text: oklch(25% 0.092 26.042);
+  
+    /* === Borders & Corners === */
+    --radius-button: 0.5rem; /* Rounded buttons */
+    --radius-card: 1rem; /* Rounded card containers */
+    --radius-input: 0.25rem; /* Input fields */
+    --border-size: 1.5px; /* Default border size */
+  
+    /* === Depth & Effects === */
+    --shadow-sm: 0px 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0px 10px 15px rgba(0, 0, 0, 0.15);
+  
+    /* === Typography (Headings, Paragraphs, Buttons) === */
+    --font-heading: 'Poppins', sans-serif; /* Headings */
+    --font-body: 'Inter', sans-serif; /* Body text */
+    --font-button: 'Montserrat', sans-serif; /* Buttons */
+    --font-size-base: 1rem; /* Default text size */
+    --font-size-lg: 1.25rem; /* Large text */
+    --font-size-xl: 1.5rem; /* Extra large */
+    --font-weight-normal: 400;
+    --font-weight-bold: 700;
+    --letter-spacing: 0.02em;
+  
+    /* === Spacing (Margins, Paddings) === */
+    --spacing-xs: 0.5rem; /* Extra small */
+    --spacing-sm: 1rem; /* Small */
+    --spacing-md: 1.5rem; /* Medium */
+    --spacing-lg: 2rem; /* Large */
+    --spacing-xl: 3rem; /* Extra Large */
+  
+    /* === Button Styles === */
+    --button-padding: 0.75rem 1.5rem;
+    --button-border-radius: 0.5rem;
+    --button-font-weight: 600;
+  
+    /* === Grid System === */
+    --container-width: 1200px;
+    --grid-gap: 1.5rem;
+  
+    /* === Responsive Breakpoints === */
+    --breakpoint-xs: 480px;
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+  
+    /* === Utility Classes === */
+    --z-index-dropdown: 1000;
+    --z-index-modal: 1050;
+    --z-index-overlay: 1100;
+}
+
+/* Apply the light background color to the entire site */
+body {
+  background-color: var(--color-bg-light);
+  margin: 0;
+  padding: 0;
+}
+
+/* Apply to common container elements */
+.container, 
+.app-container, 
+.content-container,
+.page-container,
+main,
+section {
+  background-color: var(--color-bg-light);
+}
+
