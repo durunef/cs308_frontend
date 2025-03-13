@@ -23,3 +23,34 @@ h1:nth-child(2) { color: #3498db; }
 h1:nth-child(3) { color: #2ecc71; }
 h1:nth-child(4) { color: #f39c12; }
 h1:nth-child(5) { color: #9b59b6; }
+
+/* Added basic styles for login and register pages */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.auth-box {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  text-align: center;
+}
+
+button {
+  background-color: #6d4c41;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+button:hover {
+  background-color: #563d2d;
+}
