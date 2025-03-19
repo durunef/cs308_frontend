@@ -1,9 +1,12 @@
-import { Link } from "react-router-dom";
-import Navbar from "./components/navbar/navbar";
+import React from "react";
+import ProductPage from "./components/ProductsPage/ProductsPage";
+import WelcomeScreen from "./components/welcomeScreen/WelcomeScreen";
 
 function App() {
   return (
     <div className="app-container">
+      <WelcomeScreen/>
+      <ProductPage />
     </div>
   );
 }

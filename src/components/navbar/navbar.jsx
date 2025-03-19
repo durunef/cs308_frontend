@@ -1,5 +1,6 @@
+// src/components/navbar/navbar.jsx
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faShoppingCart, 
@@ -18,20 +19,20 @@ function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const dropdownRef = useRef(null);
 
-  // Handle scroll effect
+  // Handle click outside to close dropdown
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowCategories(false);
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   // Close mobile menu when window is resized to desktop size
@@ -47,7 +48,7 @@ function Navbar() {
   }, [isMobileMenuOpen]);
 
   return (
-    <nav className={`navbar ${scrolled ? 'navbar-scrolled' : ''}`}>
+    <nav className="navbar">
       <div className="navbar-container">
         {/* Mobile menu toggle */}
         <button 
@@ -60,7 +61,7 @@ function Navbar() {
 
         {/* Logo */}
         <Link to="/" className="navbar-logo">
-          <span className="logo-text">Store</span>
+          <span className="logo-text">Coffee Shop</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -69,7 +70,7 @@ function Navbar() {
             <FontAwesomeIcon icon={faHome} className="icon-margin-right" />
             Home
           </Link>
-          <div className="dropdown">
+          <div className="dropdown" ref={dropdownRef}>
             <button 
               className="nav-link dropdown-toggle hover-effect"
               onClick={() => setShowCategories(!showCategories)}
@@ -78,11 +79,54 @@ function Navbar() {
               Categories
             </button>
             {showCategories && (
-              <div className="dropdown-menu">
-                <Link to="/category/electronics" className="dropdown-item">Electronics</Link>
-                <Link to="/category/clothing" className="dropdown-item">Clothing</Link>
-                <Link to="/category/books" className="dropdown-item">Books</Link>
-                <Link to="/category/home" className="dropdown-item">Home & Kitchen</Link>
+              <div className="dropdown-menu" style={{position: 'absolute', zIndex: 1000}}>
+                <div className="category-group">
+                  <h4 className="category-header">Coffee Bean Types</h4>
+                  <Link to="/category/arabica" className="dropdown-item">Arabica (smooth and flavorful)</Link>
+                  <Link to="/category/robusta" className="dropdown-item">Robusta (strong and bold)</Link>
+                  <Link to="/category/liberica" className="dropdown-item">Liberica (fruity and smoky)</Link>
+                  <Link to="/category/excelsa" className="dropdown-item">Excelsa (tart and complex)</Link>
+                </div>
+                
+                <div className="category-group">
+                  <h4 className="category-header">Roast Level</h4>
+                  <Link to="/category/light-roast" className="dropdown-item">Light Roast (higher acidity, floral notes)</Link>
+                  <Link to="/category/medium-roast" className="dropdown-item">Medium Roast (balanced flavor and aroma)</Link>
+                  <Link to="/category/dark-roast" className="dropdown-item">Dark Roast (bold and rich with less acidity)</Link>
+                </div>
+                
+                <div className="category-group">
+                  <h4 className="category-header">Coffee Origin</h4>
+                  <Link to="/category/single-origin" className="dropdown-item">Single-Origin (from a specific region or farm)</Link>
+                  <Link to="/category/blends" className="dropdown-item">Blends (mix of beans for unique flavors)</Link>
+                  <Link to="/category/geographical" className="dropdown-item">Geographical regions</Link>
+                </div>
+                
+                <div className="category-group">
+                  <h4 className="category-header">Grind Type</h4>
+                  <Link to="/category/whole-beans" className="dropdown-item">Whole Beans</Link>
+                  <Link to="/category/coarse-grind" className="dropdown-item">Coarse Grind</Link>
+                  <Link to="/category/medium-grind" className="dropdown-item">Medium Grind</Link>
+                  <Link to="/category/fine-grind" className="dropdown-item">Fine Grind</Link>
+                </div>
+                
+                <div className="category-group">
+                  <h4 className="category-header">Brewing Methods</h4>
+                  <Link to="/category/espresso" className="dropdown-item">Espresso Beans</Link>
+                  <Link to="/category/french-press" className="dropdown-item">French Press Coffee Beans</Link>
+                  <Link to="/category/drip-coffee" className="dropdown-item">Drip Coffee Beans</Link>
+                  <Link to="/category/cold-brew" className="dropdown-item">Cold Brew Coffee Beans</Link>
+                  <Link to="/category/turkish" className="dropdown-item">Turkish Coffee Beans</Link>
+                </div>
+                
+                <div className="category-group">
+                  <h4 className="category-header">Organic and Special Varieties</h4>
+                  <Link to="/category/organic" className="dropdown-item">Organic Coffee</Link>
+                  <Link to="/category/fair-trade" className="dropdown-item">Fair Trade Coffee</Link>
+                  <Link to="/category/decaf" className="dropdown-item">Decaf Coffee</Link>
+                  <Link to="/category/flavored" className="dropdown-item">Flavored Coffee</Link>
+                  <Link to="/category/specialty" className="dropdown-item">Specialty Coffee</Link>
+                </div>
               </div>
             )}
           </div>
@@ -155,10 +199,53 @@ function Navbar() {
             </button>
             {showCategories && (
               <div className="mobile-dropdown-menu">
-                <Link to="/category/electronics" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Electronics</Link>
-                <Link to="/category/clothing" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Clothing</Link>
-                <Link to="/category/books" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Books</Link>
-                <Link to="/category/home" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Home & Kitchen</Link>
+                <div className="mobile-category-group">
+                  <h4 className="mobile-category-header">Coffee Bean Types</h4>
+                  <Link to="/category/arabica" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Arabica</Link>
+                  <Link to="/category/robusta" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Robusta</Link>
+                  <Link to="/category/liberica" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Liberica</Link>
+                  <Link to="/category/excelsa" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Excelsa</Link>
+                </div>
+                
+                <div className="mobile-category-group">
+                  <h4 className="mobile-category-header">Roast Level</h4>
+                  <Link to="/category/light-roast" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Light Roast</Link>
+                  <Link to="/category/medium-roast" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Medium Roast</Link>
+                  <Link to="/category/dark-roast" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Dark Roast</Link>
+                </div>
+                
+                <div className="mobile-category-group">
+                  <h4 className="mobile-category-header">Coffee Origin</h4>
+                  <Link to="/category/single-origin" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Single-Origin</Link>
+                  <Link to="/category/blends" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Blends</Link>
+                  <Link to="/category/geographical" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Geographical regions</Link>
+                </div>
+                
+                <div className="mobile-category-group">
+                  <h4 className="mobile-category-header">Grind Type</h4>
+                  <Link to="/category/whole-beans" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Whole Beans</Link>
+                  <Link to="/category/coarse-grind" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Coarse Grind</Link>
+                  <Link to="/category/medium-grind" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Medium Grind</Link>
+                  <Link to="/category/fine-grind" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Fine Grind</Link>
+                </div>
+                
+                <div className="mobile-category-group">
+                  <h4 className="mobile-category-header">Brewing Methods</h4>
+                  <Link to="/category/espresso" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Espresso Beans</Link>
+                  <Link to="/category/french-press" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>French Press</Link>
+                  <Link to="/category/drip-coffee" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Drip Coffee</Link>
+                  <Link to="/category/cold-brew" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Cold Brew</Link>
+                  <Link to="/category/turkish" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Turkish Coffee</Link>
+                </div>
+                
+                <div className="mobile-category-group">
+                  <h4 className="mobile-category-header">Organic & Special</h4>
+                  <Link to="/category/organic" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Organic Coffee</Link>
+                  <Link to="/category/fair-trade" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Fair Trade</Link>
+                  <Link to="/category/decaf" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Decaf Coffee</Link>
+                  <Link to="/category/flavored" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Flavored Coffee</Link>
+                  <Link to="/category/specialty" className="mobile-dropdown-item" onClick={() => setIsMobileMenuOpen(false)}>Specialty Coffee</Link>
+                </div>
               </div>
             )}
             <div className="mobile-search">

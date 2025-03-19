@@ -2,11 +2,11 @@
 
 .auth-container {
   display: flex;
-  min-height: calc(100vh - 70px); /* Adjust based on navbar height */
+  min-height: calc(100vh - 70px); 
   background-color: var(--color-bg-light);
 }
 
-/* Main section (larger) */
+
 .auth-main {
   flex: 2;
   background-color: var(--color-bg);
@@ -17,7 +17,6 @@
   box-shadow: var(--shadow-md);
 }
 
-/* Secondary section (smaller) */
 .auth-secondary {
   flex: 1;
   background-color: var(--color-primary);
@@ -160,7 +159,6 @@
   transform: translateX(5px);
 }
 
-/* Responsive design */
 @media (max-width: 768px) {
   .auth-container {
     flex-direction: column;
@@ -172,14 +170,12 @@
     padding: var(--spacing-lg) var(--spacing-md);
   }
   
-  /* Login page: Secondary section (New Here?) should be at the bottom */
   .login-container .auth-secondary {
-    order: 1; /* Show the secondary section last on mobile */
+    order: 1; 
   }
   
-  /* Register page: Secondary section (Already Have an Account?) should be at the bottom */
   .register-container .auth-secondary {
-    order: 1; /* Show the secondary section last on mobile */
+    order: 1; 
   }
   
   .auth-title {
