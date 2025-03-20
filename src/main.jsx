@@ -6,6 +6,8 @@ import App from "./App.jsx";
 import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
 import Navbar from "./components/navbar/navbar.jsx";
+import ProductInfo from "./components/productInfo/ProductInfo";
+import mockData from "./data/mockData.json"; // Import mock data
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -15,6 +17,7 @@ createRoot(document.getElementById("root")).render(
         <Route path="/" element={<App />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/product/:productId" element={<ProductInfo products={mockData} />} />
       </Routes>
     </Router>
   </StrictMode>

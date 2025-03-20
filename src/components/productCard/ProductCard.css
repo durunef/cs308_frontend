@@ -62,22 +62,21 @@
   background-color: var(--color-secondary);
 }
 
-/* Media Queries for Mobile Screens */
 @media (max-width: 768px) {
   .product-card {
-    width: 150px; /* Smaller width for mobile */
+    width: 150px; 
   }
 
   .product-image {
-    height: 100px; /* Adjust image height for mobile */
+    height: 100px; 
   }
 
   .product-name {
-    font-size: var(--font-size-md); /* Adjust font size for mobile */
+    font-size: var(--font-size-md); 
   }
 
   .product-description,
   .product-price {
-    font-size: var(--font-size-sm); /* Adjust font size for mobile */
+    font-size: var(--font-size-sm);
   }
 }
