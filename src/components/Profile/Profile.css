@@ -1,0 +1,77 @@
+.profile-container {
+    max-width: var(--container-width);
+    margin: var(--spacing-lg) auto;
+    padding: var(--spacing-md);
+    background-color: var(--color-bg-lightest);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-md);
+    font-family: var(--font-body);
+  }
+  
+  .profile-heading {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-md);
+    font-family: var(--font-heading);
+  }
+  
+  .profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .profile-field {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .profile-field label {
+    display: block;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary-dark);
+    margin-bottom: 0.25rem;
+  }
+  
+  .profile-field input {
+    width: 100%;
+    padding: var(--spacing-xs);
+    border: var(--border-size) solid var(--color-bg-dark);
+    border-radius: var(--radius-input);
+    font-family: inherit;
+    font-size: var(--font-size-base);
+  }
+  
+  .profile-submit {
+    background-color: var(--color-primary);
+    color: var(--color-primary-text);
+    padding: var(--button-padding);
+    border: none;
+    border-radius: var(--button-border-radius);
+    font-weight: var(--button-font-weight);
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .profile-submit:hover {
+    background-color: var(--color-primary-darker);
+  }
+  
+  .profile-message {
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-input);
+    font-weight: var(--font-weight-bold);
+    text-align: center;
+  }
+  
+  .profile-message.success {
+    background-color: var(--color-success-light);
+    color: var(--color-success-text);
+  }
+  
+  .profile-message.error {
+    background-color: var(--color-error-light);
+    color: var(--color-error-text);
+  }
+  
