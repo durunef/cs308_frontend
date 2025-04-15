@@ -1,12 +1,13 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import "./theme.css"; 
+import "./theme.css";
 import App from "./App.jsx";
 import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
 import Navbar from "./components/navbar/navbar.jsx";
 import ProductInfo from "./components/productInfo/ProductInfo";
+import Profile from "./components/Profile/Profile"; // Import the Profile component
 import mockData from "./data/mockData.json"; // Import mock data
 
 createRoot(document.getElementById("root")).render(
@@ -18,6 +19,7 @@ createRoot(document.getElementById("root")).render(
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/product/:productId" element={<ProductInfo products={mockData} />} />
+        <Route path="/profile" element={<Profile />} /> {/* Add profile route */}
       </Routes>
     </Router>
   </StrictMode>
