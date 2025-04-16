@@ -226,18 +226,69 @@
   align-items: center;
 }
 
+/* Updated nav-icon styling to be consistent with the coffee-icon in profile */
+/* Base styling for all navigation icons */
 .nav-icon {
   margin-right: var(--spacing-sm);
   font-size: var(--font-size-lg);
   text-decoration: none;
   color: var(--color-text-primary);
-  transition: color 0.3s ease;
+  transition: color 0.3s ease, transform 0.3s ease;
 }
 
 .nav-icon:hover {
-  color: var(--color-primary);
+  color: #8b5a2b;
+  transform: scale(1.1);
 }
 
+/* Coffee-themed icon styling for profile, cart, and wishlist */
+.coffee-icon,
+.cart-icon,
+.wishlist-icon,
+a[href*="cart"] .nav-icon,
+a[href*="profile"] .nav-icon,
+a[href*="wishlist"] .nav-icon,
+a[href*="account"] .nav-icon,
+button[aria-label*="cart"] .nav-icon,
+button[aria-label*="profile"] .nav-icon,
+button[aria-label*="wishlist"] .nav-icon,
+button[aria-label*="account"] .nav-icon {
+  color: #8b5a2b !important;
+}
+
+/* Ensure the coffee theme is applied to SVG elements too */
+.coffee-icon svg,
+.cart-icon svg,
+.wishlist-icon svg,
+a[href*="cart"] svg,
+a[href*="profile"] svg,
+a[href*="wishlist"] svg,
+a[href*="account"] svg,
+button[aria-label*="cart"] svg,
+button[aria-label*="profile"] svg,
+button[aria-label*="wishlist"] svg,
+button[aria-label*="account"] svg {
+  fill: #8b5a2b !important;
+  color: #8b5a2b !important;
+}
+
+/* Consistent hover styling for all coffee-themed icons */
+.coffee-icon:hover,
+.cart-icon:hover,
+.wishlist-icon:hover,
+a[href*="cart"]:hover .nav-icon,
+a[href*="profile"]:hover .nav-icon,
+a[href*="wishlist"]:hover .nav-icon,
+a[href*="account"]:hover .nav-icon,
+button[aria-label*="cart"]:hover .nav-icon,
+button[aria-label*="profile"]:hover .nav-icon,
+button[aria-label*="wishlist"]:hover .nav-icon,
+button[aria-label*="account"]:hover .nav-icon {
+  color: #6b3e20 !important;
+  transform: scale(1.1);
+}
+
+/* Adding bounce animation to all nav icons consistently */
 .bounce-on-hover:hover {
   animation: bounce 0.5s;
 }

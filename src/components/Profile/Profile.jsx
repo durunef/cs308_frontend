@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faUser, 
@@ -7,7 +7,6 @@ import {
   faMapMarkerAlt, 
   faCreditCard, 
   faHistory,
-  faHeart,
   faCog,
   faCoffee,
   faHome,
@@ -17,6 +16,8 @@ import {
   faShoppingBag
 } from "@fortawesome/free-solid-svg-icons";
 import "./profile.css";
+// Import the mockData
+import mockData from '../../data/mockData.json';
 
 function Profile() {
   const [activeTab, setActiveTab] = useState("personal");
@@ -29,26 +30,7 @@ function Profile() {
   });
   
   // State for addresses
-  const [addresses, setAddresses] = useState([
-    {
-      id: 1,
-      nickname: "Home",
-      street: "123 Coffee St",
-      city: "Bean City",
-      state: "CA",
-      zipCode: "90210",
-      isDefault: true
-    },
-    {
-      id: 2,
-      nickname: "Work",
-      street: "456 Latte Ave",
-      city: "Espresso Hills",
-      state: "CA",
-      zipCode: "90211",
-      isDefault: false
-    }
-  ]);
+  const [addresses, setAddresses] = useState([]);
   
   // State for editing address
   const [editAddress, setEditAddress] = useState(null);
@@ -63,45 +45,85 @@ function Profile() {
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [addressMessage, setAddressMessage] = useState(null);
   
-  // Mock order history
-  const orderHistory = [
-    { 
-      id: "ORD-001", 
-      date: "2023-04-01", 
-      total: 42.99, 
-      status: "Delivered",
-      items: [
-        { name: "Colombian Dark Roast", quantity: 2 },
-        { name: "Coffee Grinder", quantity: 1 }
-      ] 
-    },
-    { 
-      id: "ORD-002", 
-      date: "2023-03-15", 
-      total: 28.50, 
-      status: "Delivered",
-      items: [
-        { name: "Ethiopian Medium Roast", quantity: 1 },
-        { name: "French Press", quantity: 1 }
-      ] 
-    },
-    { 
-      id: "ORD-003", 
-      date: "2023-02-20", 
-      total: 35.75, 
-      status: "Delivered",
-      items: [
-        { name: "Specialty Coffee Sampler", quantity: 1 }
-      ] 
-    },
-  ];
+  // State for order history
+  const [orderHistory, setOrderHistory] = useState([]);
   
-  // Mock wishlist items
-  const wishlistItems = [
-    { id: 1, name: "Colombian Dark Roast", price: 14.99 },
-    { id: 2, name: "Ethiopian Medium Roast", price: 15.99 },
-    { id: 3, name: "Coffee Grinder - Premium", price: 59.99 },
-  ];
+  // Add loading state
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Load mock data on component mount
+  useEffect(() => {
+    // Simulate API loading time
+    setTimeout(() => {
+      // Set addresses
+      setAddresses([
+        {
+          id: 1,
+          nickname: "Home",
+          street: "123 Coffee St",
+          city: "Bean City",
+          state: "CA",
+          zipCode: "90210",
+          isDefault: true
+        },
+        {
+          id: 2,
+          nickname: "Work",
+          street: "456 Latte Ave",
+          city: "Espresso Hills",
+          state: "CA",
+          zipCode: "90211",
+          isDefault: false
+        }
+      ]);
+      
+      // Generate order history from mockData
+      const generatedOrders = [
+        { 
+          id: "ORD-001", 
+          date: "2023-04-01", 
+          total: calculateTotal([mockData[0], mockData[0], mockData[3]]), 
+          status: "Delivered",
+          items: [
+            { name: mockData[0].name, quantity: 2 },
+            { name: mockData[3].name, quantity: 1 }
+          ] 
+        },
+        { 
+          id: "ORD-002", 
+          date: "2023-03-15", 
+          total: calculateTotal([mockData[4], mockData[1]]), 
+          status: "Delivered",
+          items: [
+            { name: mockData[4].name, quantity: 1 },
+            { name: mockData[1].name, quantity: 1 }
+          ] 
+        },
+        { 
+          id: "ORD-003", 
+          date: "2023-02-20", 
+          total: calculateTotal([mockData[5]]), 
+          status: "Delivered",
+          items: [
+            { name: mockData[5].name, quantity: 1 }
+          ] 
+        },
+      ];
+      
+      setOrderHistory(generatedOrders);
+      setIsLoading(false);
+    }, 600);
+  }, []);
+  
+  // Helper function to calculate total price
+  const calculateTotal = (items) => {
+    return items.reduce((total, item) => {
+      if (typeof item.quantity === 'number') {
+        return total + (item.price * item.quantity);
+      }
+      return total + item.price;
+    }, 0);
+  };
   
   const [message, setMessage] = useState(null);
   const [messageType, setMessageType] = useState("");
@@ -253,6 +275,18 @@ function Profile() {
     }, 1000);
   };
 
+  // Show loading state while data is being fetched
+  if (isLoading) {
+    return (
+      <div className="wishlist-container">
+        <div className="wishlist-loading">
+          <div className="loading-spinner"></div>
+          <p>Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="profile-container">
       <h1 className="profile-heading">
@@ -278,12 +312,6 @@ function Profile() {
           onClick={() => setActiveTab("orders")}
         >
           <FontAwesomeIcon icon={faHistory} /> Order History
-        </button>
-        <button 
-          className={`profile-tab ${activeTab === "wishlist" ? "active" : ""}`}
-          onClick={() => setActiveTab("wishlist")}
-        >
-          <FontAwesomeIcon icon={faHeart} /> Wishlist
         </button>
         <button 
           className={`profile-tab ${activeTab === "settings" ? "active" : ""}`}
@@ -574,34 +602,6 @@ function Profile() {
                 <FontAwesomeIcon icon={faCoffee} className="empty-icon" />
                 <p>You haven't placed any orders yet.</p>
                 <button className="shop-now-button">Shop Now</button>
-              </div>
-            )}
-          </div>
-        )}
-        
-        {activeTab === "wishlist" && (
-          <div className="wishlist">
-            <h2><FontAwesomeIcon icon={faHeart} /> Your Wishlist</h2>
-            {wishlistItems.length > 0 ? (
-              <div className="wishlist-items">
-                {wishlistItems.map(item => (
-                  <div key={item.id} className="wishlist-item">
-                    <div className="item-info">
-                      <h3>{item.name}</h3>
-                      <p className="item-price">${item.price.toFixed(2)}</p>
-                    </div>
-                    <div className="item-actions">
-                      <button className="add-to-cart-button">Add to Cart</button>
-                      <button className="remove-from-wishlist">Remove</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="empty-state">
-                <FontAwesomeIcon icon={faHeart} className="empty-icon" />
-                <p>Your wishlist is empty.</p>
-                <button className="shop-now-button">Discover Coffee</button>
               </div>
             )}
           </div>

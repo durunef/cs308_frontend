@@ -7,8 +7,10 @@ import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
 import Navbar from "./components/navbar/navbar.jsx";
 import ProductInfo from "./components/productInfo/ProductInfo";
-import Profile from "./components/Profile/Profile"; // Import the Profile component
-import mockData from "./data/mockData.json"; // Import mock data
+import Profile from "./components/Profile/Profile";
+import Wishlist from "./components/Wishlist/Wishlist";
+import Cart from "./components/Cart/Cart"; 
+import mockData from "./data/mockData.json";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -19,7 +21,9 @@ createRoot(document.getElementById("root")).render(
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/product/:productId" element={<ProductInfo products={mockData} />} />
-        <Route path="/profile" element={<Profile />} /> {/* Add profile route */}
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/cart" element={<Cart />} /> {/* Added cart route */}
       </Routes>
     </Router>
   </StrictMode>

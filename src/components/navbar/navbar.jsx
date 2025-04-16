@@ -4,14 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faShoppingCart, 
-  faHeart, 
   faUser, 
   faSignOutAlt,
   faHome,
   faList,
   faSearch,
   faBars,
-  faTimes
+  faTimes,
+  faHeart
 } from "@fortawesome/free-solid-svg-icons";
 import "./navbar.css";
 
@@ -140,15 +140,15 @@ function Navbar() {
 
         {/* User Actions */}
         <div className={`navbar-right ${isMobileMenuOpen ? 'hidden' : ''}`}>
+          <Link to="/wishlist" className="nav-icon bounce-on-hover">
+            <FontAwesomeIcon icon={faHeart} />
+          </Link>
           <Link to="/cart" className="nav-icon cart-icon bounce-on-hover">
             <FontAwesomeIcon icon={faShoppingCart} />
           </Link>
 
           {isLoggedIn ? (
             <>
-              <Link to="/wishlist" className="nav-icon bounce-on-hover">
-                <FontAwesomeIcon icon={faHeart} />
-              </Link>
               <Link to="/profile" className="nav-icon bounce-on-hover">
                 <FontAwesomeIcon icon={faUser} />
               </Link>
@@ -246,6 +246,9 @@ function Navbar() {
                 </div>
               </div>
             )}
+            <Link to="/wishlist" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+              Wishlist
+            </Link>
             <div className="mobile-search">
               <input type="text" className="mobile-search-input" placeholder="Search products..." />
               <button className="mobile-search-button">
@@ -259,10 +262,6 @@ function Navbar() {
               </Link>
               {isLoggedIn ? (
                 <>
-                  <Link to="/wishlist" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
-                    <FontAwesomeIcon icon={faHeart} className="icon-margin-right" />
-                    Wishlist
-                  </Link>
                   <Link to="/profile" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                     <FontAwesomeIcon icon={faUser} className="icon-margin-right" />
                     Profile
