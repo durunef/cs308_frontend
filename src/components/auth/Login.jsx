@@ -1,16 +1,47 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faLock, faEnvelope, faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import axios from "../../api/axios";
+import { useAuth } from "../../context/AuthContext";
 import "./auth.css";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login attempt with:", email, password);
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const response = await axios.post("/api/v1/auth/login", {
+        email,
+        password
+      });
+
+      // Extract user data from response
+      const userData = {
+        name: response.data.data?.name || email.split('@')[0], // Fallback to email username if name not provided
+        email: response.data.data?.email || email,
+        id: response.data.data?.id
+      };
+
+      // Use the login function from context with the formatted user data
+      login(response.data.token, userData);
+
+      // Redirect to home page
+      navigate("/");
+    } catch (err) {
+      setError(err.response?.data?.message || "An error occurred during login");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -20,6 +51,8 @@ function Login() {
         <div className="auth-content">
           <h1 className="auth-title">Welcome Back</h1>
           <p className="auth-subtitle">Sign in to your account to continue</p>
+          
+          {error && <div className="error-message">{error}</div>}
           
           <form className="auth-form" onSubmit={handleSubmit}>
             <div className="form-group">
@@ -48,6 +81,7 @@ function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
+                  minLength="5"
                 />
               </div>
             </div>
@@ -62,8 +96,12 @@ function Login() {
               </Link>
             </div>
             
-            <button type="submit" className="auth-button">
-              Sign In
+            <button 
+              type="submit" 
+              className="auth-button"
+              disabled={isLoading}
+            >
+              {isLoading ? "Signing In..." : "Sign In"}
             </button>
           </form>
         </div>

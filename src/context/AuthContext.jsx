@@ -1,0 +1,72 @@
+import { createContext, useState, useContext, useEffect } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+
+  useEffect(() => {
+    // Check if user is logged in on initial load
+    const storedToken = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (storedToken) {
+      try {
+        // Only try to parse userData if it exists and is not undefined
+        if (userData && userData !== 'undefined') {
+          const parsedUser = JSON.parse(userData);
+          setUser(parsedUser);
+        }
+        setToken(storedToken);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        // If there's an error parsing, clear the invalid data
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
+    }
+  }, []);
+
+  const login = (newToken, userData) => {
+    try {
+      localStorage.setItem('token', newToken);
+      if (userData) {
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+      }
+      setToken(newToken);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error('Error during login:', error);
+    }
+  };
+
+  const logout = () => {
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setIsAuthenticated(false);
+      setUser(null);
+      setToken(null);
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}; 

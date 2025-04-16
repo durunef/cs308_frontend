@@ -8,6 +8,7 @@ import {
   faSortAmountDown,
   faSortAmountUp
 } from "@fortawesome/free-solid-svg-icons";
+import axios from "../../api/axios";
 import "./ProductsPage.css"; 
 
 function ProductsPage() {
@@ -22,16 +23,33 @@ function ProductsPage() {
     priceMax: "",
     searchQuery: ""
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Load products data
+  // Load products data from backend
   useEffect(() => {
-    import("../../data/mockData.json")
-      .then((data) => {
-        const products = data.default || data;
-        setAllProducts(products);
-        setFilteredProducts(products);
-      })
-      .catch((error) => console.error("Error loading mock data:", error));
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get('http://localhost:3000/api/products');
+        
+        if (response.data.status === 'success') {
+          const products = response.data.data.products;
+          console.log('Received products:', products); // Debug log
+          setAllProducts(products);
+          setFilteredProducts(products);
+        } else {
+          throw new Error('Failed to fetch products');
+        }
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        setError('Failed to load products. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
   // Effect for filtering and sorting products
@@ -122,6 +140,26 @@ function ProductsPage() {
   // Get unique values for filter dropdowns
   const typeOptions = [...new Set(allProducts.map(p => p.type))];
   const subtypeOptions = [...new Set(allProducts.map(p => p.subtype))];
+
+  // Debug log for products before rendering
+  console.log('Products to render:', filteredProducts);
+
+  if (isLoading) {
+    return (
+      <div className="product-page-container">
+        <div className="loading-spinner"></div>
+        <p>Loading products...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="product-page-container">
+        <div className="error-message">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="product-page-container">
@@ -242,9 +280,16 @@ function ProductsPage() {
           {/* Product Grid */}
           <div className="product-grid" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
             {filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))
+              filteredProducts.map((product, index) => {
+                // Debug log for each product
+                console.log('Rendering product:', product);
+                return (
+                  <ProductCard 
+                    key={`${product._id || product.serialNumber || index}`} 
+                    product={product} 
+                  />
+                );
+              })
             ) : (
               <div className="no-results">
                 <p>No products match your criteria</p>

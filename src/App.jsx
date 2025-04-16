@@ -1,14 +1,17 @@
 import React from "react";
+import { AuthProvider } from './context/AuthContext';
 import ProductPage from "./components/ProductsPage/ProductsPage";
 import WelcomeScreen from "./components/welcomeScreen/WelcomeScreen";
-import mockData from "./data/mockData.json"; // Import mock data
+import mockData from "./data/mockData.json";
 
 function App() {
   return (
-    <div className="app-container">
-      <WelcomeScreen />
-      <ProductPage products={mockData} /> {/* Pass products to ProductPage */}
-    </div>
+    <AuthProvider>
+      <div className="app-container">
+        <WelcomeScreen />
+        <ProductPage products={mockData} />
+      </div>
+    </AuthProvider>
   );
 }
 

@@ -61,6 +61,13 @@
   margin-bottom: var(--spacing-lg);
 }
 
+.auth-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
 .welcome-button {
   padding: var(--button-padding);
   font-size: var(--font-size-lg);
@@ -71,11 +78,29 @@
   border-radius: var(--button-border-radius);
   cursor: pointer;
   transition: background-color 0.3s, transform 0.3s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .welcome-button:hover {
   background-color: var(--color-secondary);
   transform: translateY(-3px);
+}
+
+.welcome-button.logout {
+  background-color: var(--color-danger);
+}
+
+.welcome-button.logout:hover {
+  background-color: var(--color-danger-dark);
+}
+
+.welcome-message {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+  margin-right: var(--spacing-md);
 }
 
 @media (max-width: 768px) {
@@ -97,5 +122,15 @@
 
   .welcome-button {
     font-size: var(--font-size-base);
+  }
+
+  .auth-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .welcome-message {
+    margin-right: 0;
+    margin-bottom: var(--spacing-sm);
   }
 }

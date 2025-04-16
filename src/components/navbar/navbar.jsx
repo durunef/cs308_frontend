@@ -1,5 +1,5 @@
 // src/components/navbar/navbar.jsx
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
@@ -13,13 +13,15 @@ import {
   faTimes,
   faHeart
 } from "@fortawesome/free-solid-svg-icons";
+import { useAuth } from "../../context/AuthContext";
 import "./navbar.css";
 
 function Navbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const { isAuthenticated, user, logout } = useAuth();
   const [showCategories, setShowCategories] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -44,6 +46,11 @@ function Navbar() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isMobileMenuOpen]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <nav className="navbar">
@@ -128,6 +135,36 @@ function Navbar() {
               </div>
             )}
           </div>
+          <Link to="/cart" className="nav-link hover-effect">
+            <FontAwesomeIcon icon={faShoppingCart} className="icon-margin-right" />
+            Cart
+          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link to="/wishlist" className="nav-link hover-effect">
+                <FontAwesomeIcon icon={faHeart} className="icon-margin-right" />
+                Wishlist
+              </Link>
+              <Link to="/profile" className="nav-link hover-effect">
+                <FontAwesomeIcon icon={faUser} className="icon-margin-right" />
+                Profile
+              </Link>
+              <button onClick={handleLogout} className="nav-link hover-effect">
+                <FontAwesomeIcon icon={faSignOutAlt} className="icon-margin-right" />
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="nav-link hover-effect">
+                <FontAwesomeIcon icon={faUser} className="icon-margin-right" />
+                Login
+              </Link>
+              <Link to="/register" className="nav-link hover-effect">
+                Register
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -136,40 +173,6 @@ function Navbar() {
           <button className="search-button pulse-effect">
             <FontAwesomeIcon icon={faSearch} />
           </button>
-        </div>
-
-        {/* User Actions */}
-        <div className={`navbar-right ${isMobileMenuOpen ? 'hidden' : ''}`}>
-          <Link to="/wishlist" className="nav-icon bounce-on-hover">
-            <FontAwesomeIcon icon={faHeart} />
-          </Link>
-          <Link to="/cart" className="nav-icon cart-icon bounce-on-hover">
-            <FontAwesomeIcon icon={faShoppingCart} />
-          </Link>
-
-          {isLoggedIn ? (
-            <>
-              <Link to="/profile" className="nav-icon bounce-on-hover">
-                <FontAwesomeIcon icon={faUser} />
-              </Link>
-              <button 
-                className="navbar-link logout-link"
-                onClick={() => setIsLoggedIn(false)}
-              >
-                <FontAwesomeIcon icon={faSignOutAlt} className="icon-margin-right" />
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="navbar-link login-link">
-                Login
-              </Link>
-              <Link to="/register" className="navbar-link register-link">
-                Register
-              </Link>
-            </>
-          )}
         </div>
 
         {/* Mobile Side Menu */}
@@ -260,7 +263,7 @@ function Navbar() {
                 <FontAwesomeIcon icon={faShoppingCart} className="icon-margin-right" />
                 Cart
               </Link>
-              {isLoggedIn ? (
+              {isAuthenticated ? (
                 <>
                   <Link to="/profile" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                     <FontAwesomeIcon icon={faUser} className="icon-margin-right" />
@@ -268,10 +271,7 @@ function Navbar() {
                   </Link>
                   <button 
                     className="mobile-nav-link mobile-logout"
-                    onClick={() => {
-                      setIsLoggedIn(false);
-                      setIsMobileMenuOpen(false);
-                    }}
+                    onClick={handleLogout}
                   >
                     <FontAwesomeIcon icon={faSignOutAlt} className="icon-margin-right" />
                     Logout
