@@ -1,43 +1,36 @@
-# ☕ CS308 Coffee Ecommerce Frontend
+# Coffee Shop - React Frontend
 
-A responsive, coffee-themed ecommerce frontend built with React and Vite.
+## Overview
+This project is a responsive e-commerce frontend for a coffee shop built with React, Vite, and TailwindCSS. It features a modern UI with comprehensive product browsing, user authentication, and profile management capabilities.
 
-## 📋 Overview
+## 🚀 Features
+- **Responsive Design**: Mobile-friendly interface that adapts to any screen size
+- **Product Catalog**: Browse coffee products with filtering and search capabilities
+- **User Authentication**: Login and registration functionality
+- **User Profile**: Manage personal information, addresses, and order history
+- **Shopping Cart**: Add and manage items in your shopping cart
+- **Wishlist**: Save your favorite coffee products
 
-Modern frontend for an online coffee shop with responsive design and complete shopping functionality. Developed as part of the CS308 course project.
+## 🛠️ Technologies Used
+- React 19.0.0
+- React Router 7.3.0
+- Vite 6.2.0
+- TailwindCSS 4.0.14
+- FontAwesome for icons
+- Formik & Yup for form handling and validation
 
-## 🌟 Features
-
-- Responsive design for all devices
-- Coffee-themed UI with custom styling
-- Product browsing with search and filtering
-- Cart and wishlist functionality
-- User profiles with order history
-- Address management
-
-## 🎨 Design System
-
-Coffee-inspired color palette:
-- Primary: `#8b5a2b` (Coffee brown)
-- Secondary: `#6b3e20` (Espresso)
-- Background: `#f9f5f1` (Cream)
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js (v14+)
+## 📋 Prerequisites
+- Node.js (v18 or higher)
 - npm or yarn
 
-### Installation
+## 🔧 Installation
 
+1. Clone the repository:
 ```bash
-# Clone repository
 git clone https://github.com/durunef/cs308_frontend.git
 cd cs308_frontend
-
-# Install dependencies
 npm install
-
-# Start development server
+Start the development server:
 npm run dev
+
+
