@@ -1,12 +1,43 @@
-# React + Vite
+# ☕ CS308 Coffee Ecommerce Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A responsive, coffee-themed ecommerce frontend built with React and Vite.
 
-Currently, two official plugins are available:
+## 📋 Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Modern frontend for an online coffee shop with responsive design and complete shopping functionality. Developed as part of the CS308 course project.
 
-## Expanding the ESLint configuration
+## 🌟 Features
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Responsive design for all devices
+- Coffee-themed UI with custom styling
+- Product browsing with search and filtering
+- Cart and wishlist functionality
+- User profiles with order history
+- Address management
+
+## 🎨 Design System
+
+Coffee-inspired color palette:
+- Primary: `#8b5a2b` (Coffee brown)
+- Secondary: `#6b3e20` (Espresso)
+- Background: `#f9f5f1` (Cream)
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (v14+)
+- npm or yarn
+
+### Installation
+
+```bash
+# Clone repository
+git clone https://github.com/durunef/cs308_frontend.git
+cd cs308_frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
