@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faStar, faHeart, faShoppingCart } from '@fortawesome/free-solid-svg-icons';
-import axios from '../../api/axios';
+import { faStar, faHeart, faShoppingCart, faCheck, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { getProductById } from '../../api/productService';
+import { useCart } from '../../context/CartContext';
 import './ProductInfo.css';
 
 function ProductInfo() {
   const { productId } = useParams();
   const navigate = useNavigate();
+  const { addToCart, isLoading: cartLoading } = useCart();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [quantity, setQuantity] = useState(1);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
+  const [addedToCart, setAddedToCart] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -27,13 +31,12 @@ function ProductInfo() {
 
       try {
         setLoading(true);
-        console.log('Making API request to:', `/api/products/${productId}`);
-        const response = await axios.get(`/api/products/${productId}`);
+        const response = await getProductById(productId);
         
-        console.log('API Response:', response.data);
+        console.log('API Response:', response);
         
-        if (response.data.status === 'success') {
-          setProduct(response.data.data.product);
+        if (response.status === 'success') {
+          setProduct(response.data.product);
         } else {
           throw new Error('Product not found');
         }
@@ -58,6 +61,31 @@ function ProductInfo() {
 
   const handleCommentSubmit = () => {
     console.log('Comment submitted:', comment);
+  };
+  
+  const handleAddToCart = async () => {
+    if (!product || quantity <= 0) return;
+    
+    const result = await addToCart(product._id, quantity);
+    
+    if (result.success) {
+      setAddedToCart(true);
+      
+      // Reset added to cart indication after 3 seconds
+      setTimeout(() => {
+        setAddedToCart(false);
+      }, 3000);
+    } else {
+      setError('Failed to add item to cart. Please try again.');
+    }
+  };
+  
+  const incrementQuantity = () => {
+    setQuantity(prev => Math.min(prev + 1, product?.quantityInStock || 99));
+  };
+  
+  const decrementQuantity = () => {
+    setQuantity(prev => Math.max(prev - 1, 1));
   };
 
   if (loading) {
@@ -106,8 +134,41 @@ function ProductInfo() {
             Warranty Status: {product.warrantyStatus} <br />
             Distributor: {product.distributorInfo}
           </p>
-          <button className="add-to-cart-button">
-            <FontAwesomeIcon icon={faShoppingCart} /> Add to Cart
+          
+          <div className="quantity-selector">
+            <button 
+              className="quantity-btn" 
+              onClick={decrementQuantity}
+              disabled={quantity <= 1 || cartLoading}
+            >
+              <FontAwesomeIcon icon={faMinus} />
+            </button>
+            <span className="quantity">{quantity}</span>
+            <button 
+              className="quantity-btn" 
+              onClick={incrementQuantity}
+              disabled={quantity >= product.quantityInStock || cartLoading}
+            >
+              <FontAwesomeIcon icon={faPlus} />
+            </button>
+          </div>
+          
+          <button 
+            className={`add-to-cart-button ${addedToCart ? 'added' : ''}`}
+            onClick={handleAddToCart}
+            disabled={cartLoading || product.quantityInStock <= 0}
+          >
+            {cartLoading ? (
+              <span>Adding...</span>
+            ) : addedToCart ? (
+              <>
+                <FontAwesomeIcon icon={faCheck} /> Added to Cart
+              </>
+            ) : (
+              <>
+                <FontAwesomeIcon icon={faShoppingCart} /> Add to Cart
+              </>
+            )}
           </button>
         </div>
       </div>

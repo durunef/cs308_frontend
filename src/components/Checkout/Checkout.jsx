@@ -1,0 +1,563 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCreditCard, faLock, faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import { checkout } from '../../api/orderService';
+import './Checkout.css';
+
+function Checkout() {
+  const navigate = useNavigate();
+  const { cartItems, getCartTotalPrice, clearCart } = useCart();
+  const { isAuthenticated, user, token } = useAuth();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState(null);
+  const [step, setStep] = useState(1); // 1: Shipping, 2: Payment
+  const [formData, setFormData] = useState({
+    // Shipping Details
+    fullName: user?.name || '',
+    email: user?.email || '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: '',
+    phone: '',
+    
+    // Payment Details
+    cardNumber: '',
+    cardName: '',
+    expiryDate: '',
+    cvv: ''
+  });
+  
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login?redirect=checkout');
+    }
+  }, [isAuthenticated, navigate]);
+  
+  // Redirect if cart is empty
+  useEffect(() => {
+    if (cartItems.length === 0) {
+      navigate('/cart');
+    }
+  }, [cartItems, navigate]);
+  
+  // Fetch user profile to get address information
+  useEffect(() => {
+    const fetchUserProfileData = async () => {
+      if (!token) {
+        return;
+      }
+      
+      try {
+        const response = await fetch('http://localhost:3000/api/user/profile', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.status === 'success' && data.data.user) {
+            const userData = data.data.user;
+            
+            // Update form with user profile data
+            setFormData(prev => ({
+              ...prev,
+              fullName: userData.name || prev.fullName,
+              email: userData.email || prev.email,
+              address: userData.address?.street || prev.address,
+              city: userData.address?.city || prev.city,
+              zipCode: userData.address?.postalCode || prev.zipCode,
+              phone: userData.phone || prev.phone
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        // Don't set an error, just fail silently as this is just for pre-filling
+      }
+    };
+    
+    if (isAuthenticated) {
+      fetchUserProfileData();
+    }
+  }, [isAuthenticated, token, user]);
+  
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const handleNextStep = () => {
+    // Validate shipping form
+    if (step === 1) {
+      const { fullName, email, address, city, zipCode, country, phone } = formData;
+      if (!fullName || !email || !address || !city || !zipCode || !country || !phone) {
+        setError('Please fill in all required fields');
+        return;
+      }
+    }
+    
+    setStep(2);
+    setError(null);
+  };
+  
+  const handlePreviousStep = () => {
+    setStep(1);
+    setError(null);
+  };
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      // Validate form before proceeding
+      if (!validateForm()) {
+        setIsProcessing(false);
+        return;
+      }
+
+      // Check if cart is empty
+      if (cartItems.length === 0) {
+        setError('Your cart is empty');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Check if user is authenticated
+      if (!token) {
+        setError('You must be logged in to checkout');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Console log statements for debugging
+      console.log('Starting checkout process');
+      console.log('Payment details:', formData);
+      console.log('Shipping details:', {
+        fullName: formData.fullName,
+        email: formData.email,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        country: formData.country,
+        phone: formData.phone
+      });
+
+      // Combine payment and shipping details
+      const checkoutData = {
+        paymentDetails: {
+          ...formData,
+          cardNumber: formData.cardNumber.replace(/\s+/g, ''),
+        },
+        shippingDetails: {
+          fullName: formData.fullName,
+          email: formData.email,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          zipCode: formData.zipCode,
+          country: formData.country,
+          phone: formData.phone
+        },
+        // Add cart items to help the backend process the order
+        cart: cartItems
+      };
+
+      // Make cart items available globally for orderService to use
+      window.cartItems = cartItems;
+
+      console.log('Sending checkout data:', checkoutData);
+
+      // Process checkout
+      const response = await checkout(checkoutData);
+      console.log('Checkout response received:', response);
+
+      // Defensive programming to handle various response formats
+      let orderId;
+      if (response && response.data && response.data.orderId) {
+        // Standard expected format
+        orderId = response.data.orderId;
+      } else if (response && response.orderId) {
+        // Direct orderId in response
+        orderId = response.orderId;
+      } else if (response && response._id) {
+        // Direct ID in response
+        orderId = response._id;
+      } else if (response && response.data && response.data._id) {
+        // Nested _id in data
+        orderId = response.data._id;
+      } else if (response && response.order && response.order._id) {
+        // Order object with _id
+        orderId = response.order._id;
+      } else {
+        // If all else fails, create a fallback ID for development
+        console.error('Could not find orderId in response:', response);
+        if (process.env.NODE_ENV !== 'production') {
+          orderId = 'fallback-' + Date.now();
+          console.warn('Using fallback orderId for development:', orderId);
+        } else {
+          throw new Error('Invalid response format: Missing orderId');
+        }
+      }
+
+      console.log('Extracted orderId:', orderId);
+
+      // Store the orderId and order-related data in localStorage for future reference
+      localStorage.setItem('lastOrderId', orderId);
+      localStorage.setItem('lastCartItems', JSON.stringify(cartItems));
+      localStorage.setItem('lastShippingDetails', JSON.stringify(checkoutData.shippingDetails));
+      
+      // Also store the total for order summary display
+      const totalPrice = getCartTotalPrice();
+      localStorage.setItem('lastOrderTotal', totalPrice.toFixed(2));
+      localStorage.setItem('lastOrderTax', (totalPrice * 0.08).toFixed(2));
+      localStorage.setItem('lastOrderSubtotal', totalPrice.toFixed(2));
+
+      // Clear cart after successful checkout and immediately navigate
+      try {
+        console.log('Clearing cart before navigation...');
+        const clearResult = await clearCart();
+        console.log('Cart cleared with result:', clearResult);
+        
+        // First try using React Router navigation
+        console.log(`Navigating to order confirmation: /order-confirmation/${orderId}`);
+        navigate(`/order-confirmation/${orderId}`, { replace: true });
+        
+        // As a backup, use direct window location change after a brief delay
+        // This ensures navigation happens even if React Router has issues
+        setTimeout(() => {
+          if (window.location.pathname !== `/order-confirmation/${orderId}`) {
+            console.log('Forcing navigation with window.location');
+            window.location.href = `/order-confirmation/${orderId}`;
+          }
+        }, 500);
+      } catch (clearError) {
+        console.error('Error clearing cart:', clearError);
+        // If there's an error, force navigation with window.location
+        window.location.href = `/order-confirmation/${orderId}`;
+      }
+    } catch (error) {
+      console.error('Checkout failed:', error);
+      
+      let errorMessage = 'An error occurred during checkout. Please try again.';
+      
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+        // Use server error message if available
+        errorMessage = error.response.data.message || errorMessage;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
+  const validateForm = () => {
+    const { cardNumber, cardName, expiryDate, cvv } = formData;
+    if (!cardNumber || !cardName || !expiryDate || !cvv) {
+      setError('Please fill in all payment details');
+      return false;
+    }
+    
+    if (cardNumber.length < 16) {
+      setError('Please enter a valid card number');
+      return false;
+    }
+    
+    if (cvv.length < 3) {
+      setError('Please enter a valid CVV');
+      return false;
+    }
+    
+    // Validate expiry date (MM/YY)
+    const expiryRegex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
+    if (!expiryRegex.test(expiryDate)) {
+      setError('Please enter a valid expiry date in MM/YY format');
+      return false;
+    }
+    
+    // Check expiry date is not in the past
+    const [expiryMonth, expiryYear] = expiryDate.split('/');
+    const expiry = new Date(2000 + parseInt(expiryYear), parseInt(expiryMonth) - 1, 1);
+    const today = new Date();
+    
+    if (expiry < today) {
+      setError('Your card has expired. Please use a valid card');
+      return false;
+    }
+    
+    return true;
+  };
+  
+  return (
+    <div className="checkout-container">
+      <h1>Checkout</h1>
+      
+      <div className="checkout-progress">
+        <div className={`progress-step ${step >= 1 ? 'active' : ''}`}>
+          <span className="step-number">1</span>
+          <span className="step-name">Shipping</span>
+        </div>
+        <div className="progress-line"></div>
+        <div className={`progress-step ${step >= 2 ? 'active' : ''}`}>
+          <span className="step-number">2</span>
+          <span className="step-name">Payment</span>
+        </div>
+      </div>
+      
+      {error && (
+        <div className="checkout-error">
+          {error}
+        </div>
+      )}
+      
+      <form onSubmit={handleSubmit} className="checkout-form">
+        {step === 1 ? (
+          <div className="shipping-details">
+            <h2>Shipping Details</h2>
+            
+            <div className="form-group">
+              <label htmlFor="fullName">Full Name</label>
+              <input
+                type="text"
+                id="fullName"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="address">Address</label>
+              <input
+                type="text"
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="city">City</label>
+                <input
+                  type="text"
+                  id="city"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="state">State</label>
+                <input
+                  type="text"
+                  id="state"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+            
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="zipCode">Zip Code</label>
+                <input
+                  type="text"
+                  id="zipCode"
+                  name="zipCode"
+                  value={formData.zipCode}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="country">Country</label>
+                <input
+                  type="text"
+                  id="country"
+                  name="country"
+                  value={formData.country}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="phone">Phone Number</label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            
+            <button 
+              type="button" 
+              className="next-step-button"
+              onClick={handleNextStep}
+            >
+              Continue to Payment
+            </button>
+          </div>
+        ) : (
+          <div className="payment-details">
+            <h2>Payment Information</h2>
+            <div className="secure-payment-note">
+              <FontAwesomeIcon icon={faLock} />
+              <span>All transactions are secure and encrypted</span>
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="cardName">Name on Card</label>
+              <input
+                type="text"
+                id="cardName"
+                name="cardName"
+                value={formData.cardName}
+                onChange={handleChange}
+                placeholder="Full name as displayed on card"
+                required
+              />
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="cardNumber">Card Number</label>
+              <div className="card-input-container">
+                <FontAwesomeIcon icon={faCreditCard} className="card-icon" />
+                <input
+                  type="text"
+                  id="cardNumber"
+                  name="cardNumber"
+                  value={formData.cardNumber}
+                  onChange={handleChange}
+                  placeholder="1234 5678 9012 3456"
+                  maxLength="16"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="expiryDate">Expiry Date</label>
+                <input
+                  type="text"
+                  id="expiryDate"
+                  name="expiryDate"
+                  value={formData.expiryDate}
+                  onChange={handleChange}
+                  placeholder="MM/YY"
+                  maxLength="5"
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="cvv">CVV</label>
+                <input
+                  type="text"
+                  id="cvv"
+                  name="cvv"
+                  value={formData.cvv}
+                  onChange={handleChange}
+                  placeholder="123"
+                  maxLength="4"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="order-summary">
+              <h3>Order Summary</h3>
+              <div className="summary-row">
+                <span>Subtotal</span>
+                <span>${getCartTotalPrice().toFixed(2)}</span>
+              </div>
+              <div className="summary-row">
+                <span>Shipping</span>
+                <span>Free</span>
+              </div>
+              <div className="summary-row">
+                <span>Tax</span>
+                <span>${(getCartTotalPrice() * 0.08).toFixed(2)}</span>
+              </div>
+              <div className="summary-row total">
+                <span>Total</span>
+                <span>${(getCartTotalPrice() * 1.08).toFixed(2)}</span>
+              </div>
+            </div>
+            
+            <div className="payment-actions">
+              <button 
+                type="button" 
+                className="back-button"
+                onClick={handlePreviousStep}
+                disabled={isProcessing}
+              >
+                <FontAwesomeIcon icon={faArrowLeft} /> Back
+              </button>
+              
+              <button 
+                type="submit" 
+                className="place-order-button"
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <>
+                    <FontAwesomeIcon icon={faSpinner} spin /> Processing...
+                  </>
+                ) : (
+                  'Place Order'
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </form>
+    </div>
+  );
+}
+
+export default Checkout; 

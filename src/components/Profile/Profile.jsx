@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
   faUser, 
@@ -12,10 +13,14 @@ import {
   faPlus,
   faEdit,
   faTrash,
-  faShoppingBag
+  faShoppingBag,
+  faEye,
+  faSpinner,
+  faExclamationTriangle
 } from "@fortawesome/free-solid-svg-icons";
 import "./profile.css";
 import { useAuth } from "../../context/AuthContext";
+import { getOrderHistory } from "../../api/orderService";
 
 function Profile() {
   const { user, token, isAuthenticated } = useAuth();
@@ -29,6 +34,9 @@ function Profile() {
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState(null);
   const [messageType, setMessageType] = useState("");
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState(null);
 
   useEffect(() => {
     console.log('Profile component - Auth state:', { user, token, isAuthenticated });
@@ -83,6 +91,33 @@ function Profile() {
     fetchUserData();
   }, [token, isAuthenticated]);
 
+  // Fetch order history when the orders tab is clicked
+  useEffect(() => {
+    if (activeTab === 'orders' && isAuthenticated) {
+      fetchOrders();
+    }
+  }, [activeTab, isAuthenticated]);
+
+  const fetchOrders = async () => {
+    setOrdersLoading(true);
+    setOrdersError(null);
+    
+    try {
+      const response = await getOrderHistory();
+      
+      if (response.status === 'success') {
+        setOrders(response.data || []);
+      } else {
+        throw new Error('Failed to fetch order history');
+      }
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setOrdersError('We could not load your order history. Please try again later.');
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setAddress(prev => ({
@@ -129,6 +164,24 @@ function Profile() {
       console.error('Error updating address:', error);
       setMessage("Failed to update address. Please try again.");
       setMessageType("error");
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  const getStatusClass = (status) => {
+    switch(status.toLowerCase()) {
+      case 'processing':
+        return 'status-processing';
+      case 'in-transit':
+        return 'status-in-transit';
+      case 'delivered':
+        return 'status-delivered';
+      default:
+        return '';
     }
   };
 
@@ -262,10 +315,69 @@ function Profile() {
         {activeTab === "orders" && (
           <div className="order-history">
             <h2><FontAwesomeIcon icon={faShoppingBag} /> Your Orders</h2>
-            <div className="empty-state">
-              <FontAwesomeIcon icon={faCoffee} className="empty-icon" />
-              <p>You haven't placed any orders yet.</p>
-              <button className="shop-now-button">Shop Now</button>
+            
+            {ordersLoading ? (
+              <div className="loading-state">
+                <FontAwesomeIcon icon={faSpinner} spin className="loading-icon" />
+                <p>Loading your order history...</p>
+              </div>
+            ) : ordersError ? (
+              <div className="error-state">
+                <FontAwesomeIcon icon={faExclamationTriangle} className="error-icon" />
+                <p>{ordersError}</p>
+                <button onClick={fetchOrders} className="retry-button">
+                  Try Again
+                </button>
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="empty-state">
+                <FontAwesomeIcon icon={faCoffee} className="empty-icon" />
+                <p>You haven't placed any orders yet.</p>
+                <Link to="/products" className="shop-now-button">Shop Now</Link>
+              </div>
+            ) : (
+              <div className="order-list">
+                {orders.map(order => (
+                  <div key={order._id} className="order-item">
+                    <div className="order-header">
+                      <span className="order-id">Order #{order.orderNumber || order._id}</span>
+                      <span className="order-date">{formatDate(order.createdAt)}</span>
+                    </div>
+                    <div className="order-items">
+                      {order.items.map((item, idx) => (
+                        <span key={idx} className="order-item-entry">
+                          {item.product.name} × {item.quantity}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="order-details">
+                      <span className="order-total">${order.total.toFixed(2)}</span>
+                      <span className={`order-status ${getStatusClass(order.status)}`}>
+                        {order.status}
+                      </span>
+                      <Link to={`/order-confirmation/${order._id}`} className="view-order-button">
+                        <FontAwesomeIcon icon={faEye} /> View Details
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="order-status-legend">
+              <h3>Order Status Legend</h3>
+              <div className="legend-item">
+                <span className="status-dot status-processing"></span>
+                <span>Processing - Your order has been received and is being prepared</span>
+              </div>
+              <div className="legend-item">
+                <span className="status-dot status-in-transit"></span>
+                <span>In Transit - Your order is on its way to you</span>
+              </div>
+              <div className="legend-item">
+                <span className="status-dot status-delivered"></span>
+                <span>Delivered - Your order has been delivered</span>
+              </div>
             </div>
           </div>
         )}

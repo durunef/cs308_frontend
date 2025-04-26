@@ -8,7 +8,7 @@ import {
   faSortAmountDown,
   faSortAmountUp
 } from "@fortawesome/free-solid-svg-icons";
-import axios from "../../api/axios";
+import { getAllProducts } from "../../api/productService";
 import "./ProductsPage.css"; 
 
 function ProductsPage() {
@@ -31,10 +31,10 @@ function ProductsPage() {
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get('http://localhost:3000/api/products');
+        const response = await getAllProducts();
         
-        if (response.data.status === 'success') {
-          const products = response.data.data.products;
+        if (response.status === 'success') {
+          const products = response.data.products;
           console.log('Received products:', products); // Debug log
           setAllProducts(products);
           setFilteredProducts(products);

@@ -1,170 +1,202 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { 
-  faTrash, 
-  faShoppingCart, 
-  faArrowLeft,
-  faMinus,
-  faPlus
-} from "@fortawesome/free-solid-svg-icons";
-import mockData from "../../data/mockData.json";
-import "./Cart.css";
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash, faPlus, faMinus, faArrowLeft, faShoppingCart } from '@fortawesome/free-solid-svg-icons';
+import { useCart } from '../../context/CartContext';
+import './Cart.css';
 
 function Cart() {
-  const [cartItems, setCartItems] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
+  const { 
+    cartItems, 
+    isLoading, 
+    error, 
+    fetchCart, 
+    updateItemQuantity, 
+    removeItem, 
+    getCartTotalPrice 
+  } = useCart();
+  
+  const [localItems, setLocalItems] = useState([]);
+  const [isUpdating, setIsUpdating] = useState(false);
+  
   useEffect(() => {
-    // Simulate fetching cart data using mockData
-    setTimeout(() => {
-      // Select random items from mockData and add quantity
-      const randomItems = [...mockData]
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 2)
+    fetchCart();
+  }, []);
+  
+  useEffect(() => {
+    if (cartItems && cartItems.length >= 0) {
+      // Create a local copy of cart items to avoid modifying the context state directly
+      // Also filter out any invalid items that might have corrupted product data
+      const items = cartItems
+        .filter(item => item && item.product && item.product._id && item.product.name)
         .map(item => ({
           ...item,
-          quantity: Math.floor(Math.random() * 3) + 1
+          isLoading: false // add loading state for each item
         }));
       
-      setCartItems(randomItems);
-      setIsLoading(false);
-    }, 600);
-  }, []);
-
-  const removeFromCart = (id) => {
-    setCartItems(cartItems.filter(item => item.id !== id));
-  };
-
-  const updateQuantity = (id, newQuantity) => {
+      setLocalItems(items);
+    }
+  }, [cartItems]);
+  
+  const handleQuantityChange = async (item, newQuantity, index) => {
     if (newQuantity < 1) return;
     
-    setCartItems(cartItems.map(item => 
-      item.id === id ? { ...item, quantity: newQuantity } : item
-    ));
+    // Update local state first for better UX
+    const updatedItems = [...localItems];
+    updatedItems[index].isLoading = true;
+    setLocalItems(updatedItems);
+    
+    setIsUpdating(true);
+    
+    try {
+      await updateItemQuantity(item.product._id, newQuantity);
+    } catch (error) {
+      console.error('Failed to update quantity', error);
+    } finally {
+      setIsUpdating(false);
+    }
   };
-
-  const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+  
+  const handleRemoveItem = async (item, index) => {
+    // Apply loading state to the specific item being removed
+    const updatedItems = [...localItems];
+    updatedItems[index].isLoading = true;
+    setLocalItems(updatedItems);
+    
+    // Set overall updating state to disable all interactions
+    setIsUpdating(true);
+    
+    try {
+      console.log('Removing product:', item.product._id);
+      const result = await removeItem(item.product._id);
+      
+      if (!result.success) {
+        // If removal failed, revert the loading state on the item
+        const revertedItems = [...localItems];
+        revertedItems[index].isLoading = false;
+        setLocalItems(revertedItems);
+      }
+      // If successful, the CartContext will update cartItems and trigger the useEffect
+    } catch (error) {
+      console.error('Failed to remove item', error);
+      // Revert loading state on error
+      const revertedItems = [...localItems];
+      revertedItems[index].isLoading = false;
+      setLocalItems(revertedItems);
+    } finally {
+      setIsUpdating(false);
+    }
   };
-
-  if (isLoading) {
+  
+  if (isLoading && !localItems.length) {
     return (
       <div className="cart-container">
-        <div className="cart-loading">
+        <div className="loading-cart">
           <div className="loading-spinner"></div>
           <p>Loading your cart...</p>
         </div>
       </div>
     );
   }
-
-  return (
-    <div className="cart-container">
-      <div className="cart-header">
-        <h1><FontAwesomeIcon icon={faShoppingCart} className="cart-icon" /> Shopping Cart</h1>
-        <Link to="/" className="back-to-shopping">
-          <FontAwesomeIcon icon={faArrowLeft} /> Continue Shopping
-        </Link>
+  
+  if (error) {
+    return (
+      <div className="cart-container">
+        <div className="cart-error">
+          <p>{error}</p>
+          <button className="retry-button" onClick={fetchCart}>
+            Try Again
+          </button>
+        </div>
       </div>
-
-      {cartItems.length === 0 ? (
+    );
+  }
+  
+  if (!localItems.length) {
+    return (
+      <div className="cart-container">
         <div className="empty-cart">
-          <div className="empty-cart-icon">
-            <FontAwesomeIcon icon={faShoppingCart} />
-          </div>
+          <FontAwesomeIcon icon={faShoppingCart} className="empty-cart-icon" />
           <h2>Your cart is empty</h2>
           <p>Looks like you haven't added any products to your cart yet.</p>
-          <Link to="/products" className="browse-products-btn">Browse Products</Link>
+          <Link to="/" className="continue-shopping-button">
+            <FontAwesomeIcon icon={faArrowLeft} /> Continue Shopping
+          </Link>
         </div>
-      ) : (
-        <>
-          <div className="cart-count">
-            {cartItems.length} {cartItems.length === 1 ? "item" : "items"} in your cart
-          </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="cart-container">
+      <h1>Your Cart</h1>
+      
+      <div className="cart-items">
+        {localItems.map((item, index) => {
+          // Skip rendering if item or product is missing crucial data
+          if (!item || !item.product || !item.product._id) {
+            return null;
+          }
           
-          <div className="cart-content">
-            <div className="cart-items">
-              {cartItems.map((item) => (
-                <div key={item.id} className="cart-item">
-                  <div className="cart-item-image">
-                    <img src={item.image || "https://via.placeholder.com/150"} alt={item.name} />
-                  </div>
-                  <div className="cart-item-details">
-                    <h3>{item.name}</h3>
-                    <p className="cart-item-type">{item.type} - {item.subtype}</p>
-                    <p className="cart-item-description">{item.description}</p>
-                    <div className="cart-item-price">${item.price.toFixed(2)}</div>
-                  </div>
-                  <div className="cart-item-actions">
-                    <div className="quantity-control">
-                      <button 
-                        className="quantity-btn"
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
-                      >
-                        <FontAwesomeIcon icon={faMinus} />
-                      </button>
-                      <span className="quantity">{item.quantity}</span>
-                      <button 
-                        className="quantity-btn"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        disabled={item.quantity >= item.stock}
-                      >
-                        <FontAwesomeIcon icon={faPlus} />
-                      </button>
-                    </div>
-                    <div className="item-total">
-                      ${(item.price * item.quantity).toFixed(2)}
-                    </div>
-                    <button 
-                      className="remove-btn"
-                      onClick={() => removeFromCart(item.id)}
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                      <span>Remove</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="cart-summary">
-              <h3>Order Summary</h3>
-              <div className="summary-row">
-                <span>Subtotal</span>
-                <span>${calculateSubtotal().toFixed(2)}</span>
+          return (
+            <div key={item._id || index} className={`cart-item ${item.isLoading ? 'loading' : ''}`}>
+              <div className="cart-item-image">
+                {item.product.image && (
+                  <img src={item.product.image} alt={item.product.name || 'Product'} />
+                )}
               </div>
-              <div className="summary-row">
-                <span>Shipping</span>
-                <span>Free</span>
+              <div className="cart-item-details">
+                <h3>{item.product.name || 'Unknown Product'}</h3>
+                <p className="cart-item-price">
+                  ${item.product.price ? item.product.price.toFixed(2) : '0.00'}
+                </p>
               </div>
-              <div className="summary-row">
-                <span>Tax</span>
-                <span>${(calculateSubtotal() * 0.07).toFixed(2)}</span>
+              <div className="cart-item-quantity">
+                <button 
+                  onClick={() => handleQuantityChange(item, item.quantity - 1, index)}
+                  disabled={item.isLoading || isUpdating || item.quantity <= 1}
+                  className="quantity-button"
+                >
+                  <FontAwesomeIcon icon={faMinus} />
+                </button>
+                <span className="quantity">{item.quantity}</span>
+                <button 
+                  onClick={() => handleQuantityChange(item, item.quantity + 1, index)}
+                  disabled={item.isLoading || isUpdating}
+                  className="quantity-button"
+                >
+                  <FontAwesomeIcon icon={faPlus} />
+                </button>
               </div>
-              <div className="summary-total">
-                <span>Total</span>
-                <span>${(calculateSubtotal() * 1.07).toFixed(2)}</span>
+              <div className="cart-item-total">
+                ${item.product.price ? (item.product.price * item.quantity).toFixed(2) : '0.00'}
               </div>
-              
-              <button className="checkout-btn">
-                Proceed to Checkout
+              <button 
+                className="cart-item-remove"
+                onClick={() => handleRemoveItem(item, index)}
+                disabled={item.isLoading || isUpdating}
+              >
+                <FontAwesomeIcon icon={faTrash} />
               </button>
-              
-              <div className="payment-methods">
-                <p>We Accept:</p>
-                <div className="payment-icons">
-                  <span className="payment-icon">Visa</span>
-                  <span className="payment-icon">MC</span>
-                  <span className="payment-icon">Amex</span>
-                  <span className="payment-icon">PayPal</span>
-                </div>
-              </div>
             </div>
-          </div>
-        </>
-      )}
+          );
+        })}
+      </div>
+      
+      <div className="cart-summary">
+        <div className="cart-total">
+          <span>Total:</span>
+          <span>${getCartTotalPrice().toFixed(2)}</span>
+        </div>
+        <div className="cart-actions">
+          <Link to="/" className="continue-shopping">
+            <FontAwesomeIcon icon={faArrowLeft} /> Continue Shopping
+          </Link>
+          <Link to="/checkout" className="checkout-button" style={{ textDecoration: 'none' }}>
+            Proceed to Checkout
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
