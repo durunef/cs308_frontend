@@ -31,7 +31,12 @@ export function CartProvider({ children }) {
         setCartItems(response.data.items || []);
         if (response.data._id) {
           setCartId(response.data._id);
-          if (!isAuthenticated) localStorage.setItem('guestCartId', response.data._id);
+          if (!isAuthenticated) {
+            localStorage.setItem('guestCartId', response.data._id);
+          }
+        } else {
+          setCartId(null);
+          localStorage.removeItem('guestCartId');
         }
       } else {
         setCartItems([]);
@@ -43,10 +48,13 @@ export function CartProvider({ children }) {
     }
   }, [isAuthenticated]);
 
-  // 2) Guest-to-user cart merge
+  // 2) Guest→User merge (sadece login sonrası bir kez)
   const mergeCartsOnLogin = useCallback(async () => {
     const guestCartId = localStorage.getItem('guestCartId');
     if (!guestCartId) return;
+    localStorage.removeItem('guestCartId');
+    setCartId(null);
+
     setIsLoading(true);
     try {
       await mergeGuestCart(guestCartId);
@@ -58,13 +66,13 @@ export function CartProvider({ children }) {
     }
   }, [fetchCart]);
 
-  // 3) Başlangıçta veya login değişince
+  // 3) mount / auth değişince
   useEffect(() => {
     if (isAuthenticated) mergeCartsOnLogin();
     else fetchCart();
   }, [isAuthenticated, fetchCart, mergeCartsOnLogin]);
 
-  // 4) Add-to-cart (aynı)
+  // 4) add-to-cart
   const addToCart = async (productId, quantity = 1) => {
     setIsLoading(true);
     setError(null);
@@ -73,7 +81,6 @@ export function CartProvider({ children }) {
         ? await addToCartAuthenticated(productId, quantity)
         : await addToCartGuest(productId, quantity, cartId);
       if (resp.status === 'success') {
-        // ekledikten sonra hem badge, hem detay için yeniden çek
         await fetchCart();
         return { success: true };
       }
@@ -87,27 +94,22 @@ export function CartProvider({ children }) {
     }
   };
 
-  // 5) Quantity update
+  // 5) quantity güncelleme
   const updateItemQuantity = async (productId, quantity) => {
     setIsLoading(true);
     setError(null);
-
-    // Optimistic olarak badge güncellemek için önce context'i güncelle
     setCartItems(prev =>
       prev.map(i => (i.product._id === productId ? { ...i, quantity } : i))
     );
-
     try {
       const resp = await apiUpdateCartItem(productId, quantity);
       if (resp.status === 'success') {
-        // mutlak doğru data için yeniden fetch
         await fetchCart();
         return { success: true };
-      } else {
-        const msg = resp.message || 'Could not update quantity';
-        setError(msg);
-        return { success: false, error: msg };
       }
+      const msg = resp.message || 'Could not update quantity';
+      setError(msg);
+      return { success: false, error: msg };
     } catch (err) {
       const msg = err.response?.data?.message || 'Server error';
       setError(msg);
@@ -117,24 +119,20 @@ export function CartProvider({ children }) {
     }
   };
 
-  // 6) Remove item
+  // 6) remove
   const removeItem = async (productId) => {
     setIsLoading(true);
     setError(null);
-
-    // Önce badge için optimist çıkart
     setCartItems(prev => prev.filter(i => i.product._id !== productId));
-
     try {
       const resp = await apiRemoveCartItem(productId);
       if (resp.status === 'success') {
         await fetchCart();
         return { success: true };
-      } else {
-        const msg = resp.message || 'Could not remove item';
-        setError(msg);
-        return { success: false, error: msg };
       }
+      const msg = resp.message || 'Could not remove item';
+      setError(msg);
+      return { success: false, error: msg };
     } catch (err) {
       const msg = err.response?.data?.message || 'Server error';
       setError(msg);
@@ -144,10 +142,9 @@ export function CartProvider({ children }) {
     }
   };
 
-  // 7) Toplam fiyat ve adet
+  // toplamlar
   const getCartTotalPrice = () =>
     cartItems.reduce((sum, i) => sum + i.quantity * i.product.price, 0);
-
   const getCartTotalQuantity = () =>
     cartItems.reduce((sum, i) => sum + i.quantity, 0);
 

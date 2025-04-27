@@ -64,19 +64,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // src/context/AuthContext.jsx
+
   const logout = () => {
     try {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+     // Misafir sepetini de temizle ki logout sonrası eski kullanıcı sepeti görünmesin
+      localStorage.removeItem('guestCartId');
       setIsAuthenticated(false);
       setUser(null);
       setToken(null);
-      
-      // Don't remove guestCartId on logout, the user might want to keep their cart
     } catch (error) {
       console.error('Error during logout:', error);
     }
   };
+
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout }}>

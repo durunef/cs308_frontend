@@ -1,18 +1,37 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+// src/components/auth/Login.jsx
+
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faLock, faEnvelope, faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import {
+  faLock,
+  faEnvelope,
+  faArrowRight
+} from "@fortawesome/free-solid-svg-icons";
 import axios from "../../api/axios";
 import { useAuth } from "../../context/AuthContext";
 import "./auth.css";
 
 function Login() {
+  // 1) redirect parametresini al
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/";
+
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [info, setInfo] = useState("");    // bilgi mesajı için
+  const [error, setError] = useState("");  // gerçek hata mesajı için
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-  const { login } = useAuth();
+
+  // 2) Eğer redirect varsa, mount olduğunda bilgi mesajı göster
+  useEffect(() => {
+    if (redirectTo && redirectTo !== "/") {
+      setInfo("Devam etmek için lütfen giriş yapın");
+    }
+  }, [redirectTo]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,20 +44,23 @@ function Login() {
         password
       });
 
-      // Extract user data from response
+      // Token + user verisini context'e kaydet
+      const token = response.data.token;
       const userData = {
-        name: response.data.data?.name || email.split('@')[0], // Fallback to email username if name not provided
+        name: response.data.data?.name || email.split('@')[0],
         email: response.data.data?.email || email,
-        id: response.data.data?.id
+        id:   response.data.data?.id
       };
+      login(token, userData);
 
-      // Use the login function from context with the formatted user data
-      login(response.data.token, userData);
+      // 3) Başarılı girişten sonra redirectTo'ya git
+      navigate(redirectTo, { replace: true });
 
-      // Redirect to home page
-      navigate("/");
     } catch (err) {
-      setError(err.response?.data?.message || "An error occurred during login");
+      setError(
+        err.response?.data?.message ||
+        "Giriş sırasında bir hata oluştu"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -46,14 +68,23 @@ function Login() {
 
   return (
     <div className="auth-container login-container">
-      {/* Main Login Section (Larger) */}
       <div className="auth-main">
         <div className="auth-content">
           <h1 className="auth-title">Welcome Back</h1>
           <p className="auth-subtitle">Sign in to your account to continue</p>
-          
-          {error && <div className="error-message">{error}</div>}
-          
+
+          {/* 4) Bilgi ve hata mesajları */}
+          {info && (
+            <div className="info-message">
+              {info}
+            </div>
+          )}
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+
           <form className="auth-form" onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="email">Email</label>
@@ -69,7 +100,7 @@ function Login() {
                 />
               </div>
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="password">Password</label>
               <div className="input-with-icon">
@@ -85,7 +116,7 @@ function Login() {
                 />
               </div>
             </div>
-            
+
             <div className="form-options">
               <div className="remember-me">
                 <input type="checkbox" id="remember" />
@@ -95,9 +126,9 @@ function Login() {
                 Forgot Password?
               </Link>
             </div>
-            
-            <button 
-              type="submit" 
+
+            <button
+              type="submit"
               className="auth-button"
               disabled={isLoading}
             >
@@ -106,12 +137,13 @@ function Login() {
           </form>
         </div>
       </div>
-      
-      {/* Secondary Register Section (Smaller) */}
+
       <div className="auth-secondary">
         <div className="auth-content">
           <h2 className="auth-title">New Here?</h2>
-          <p className="auth-subtitle">Sign up and discover our amazing products</p>
+          <p className="auth-subtitle">
+            Sign up and discover our amazing products
+          </p>
           <Link to="/register" className="auth-alt-button">
             Create Account <FontAwesomeIcon icon={faArrowRight} />
           </Link>
