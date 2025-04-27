@@ -32,11 +32,28 @@ export const AuthProvider = ({ children }) => {
 
   const login = (newToken, userData) => {
     try {
+      console.log('Login called with token and data:', newToken, userData);
       localStorage.setItem('token', newToken);
-      if (userData) {
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
+      
+      // Handle different response formats from the API
+      let userDataToStore;
+      if (userData && userData.data && userData.data.user) {
+        // New API response format
+        userDataToStore = userData.data.user;
+      } else if (userData && userData.user) {
+        // Legacy format
+        userDataToStore = userData.user;
+      } else {
+        // Just use what we got
+        userDataToStore = userData;
       }
+      
+      if (userDataToStore) {
+        console.log('Storing user data:', userDataToStore);
+        localStorage.setItem('user', JSON.stringify(userDataToStore));
+        setUser(userDataToStore);
+      }
+      
       setToken(newToken);
       setIsAuthenticated(true);
       

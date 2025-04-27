@@ -6,7 +6,8 @@ import {
   faThList, 
   faSearch,
   faSortAmountDown,
-  faSortAmountUp
+  faSortAmountUp,
+  faStar
 } from "@fortawesome/free-solid-svg-icons";
 import ProductCard from "../productCard/ProductCard";
 import { getProductsByCategory } from "../../api/categoryService";
@@ -18,6 +19,7 @@ function CategoryPage() {
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState({});
   const [sortOrder, setSortOrder] = useState("none");
+  const [ratingSort, setRatingSort] = useState("none");
   const [filterValues, setFilterValues] = useState({
     searchQuery: ""
   });
@@ -65,9 +67,16 @@ function CategoryPage() {
 
   // Sort products based on sort order
   const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sortOrder === "none") return 0;
-    if (sortOrder === "asc") return a.price - b.price;
-    if (sortOrder === "desc") return b.price - a.price;
+    if (sortOrder !== "none") {
+      if (sortOrder === "asc") return a.price - b.price;
+      if (sortOrder === "desc") return b.price - a.price;
+    }
+    
+    if (ratingSort !== "none") {
+      if (ratingSort === "desc") return (b.rating || 0) - (a.rating || 0);
+      if (ratingSort === "asc") return (a.rating || 0) - (b.rating || 0);
+    }
+    
     return 0;
   });
 
@@ -79,10 +88,25 @@ function CategoryPage() {
   };
 
   const toggleSortOrder = () => {
-    const orders = ["none", "asc", "desc"];
-    const currentIndex = orders.indexOf(sortOrder);
-    const nextIndex = (currentIndex + 1) % orders.length;
-    setSortOrder(orders[nextIndex]);
+    if (sortOrder === "none") {
+      setSortOrder("asc");
+      setRatingSort("none"); // Reset rating sort when sorting by price
+    } else if (sortOrder === "asc") {
+      setSortOrder("desc");
+    } else {
+      setSortOrder("none");
+    }
+  };
+
+  const toggleRatingSort = () => {
+    if (ratingSort === "none") {
+      setRatingSort("desc"); // Start with highest rated first
+      setSortOrder("none"); // Reset price sort when sorting by rating
+    } else if (ratingSort === "desc") {
+      setRatingSort("asc");
+    } else {
+      setRatingSort("none");
+    }
   };
 
   const handleGridViewChange = (cols) => {
@@ -158,6 +182,16 @@ function CategoryPage() {
             {sortOrder === 'none' && 'Sort by Price'}
             {sortOrder === 'asc' && 'Price: Low to High'}
             {sortOrder === 'desc' && 'Price: High to Low'}
+          </button>
+          
+          <button 
+            className={`sort-button ${ratingSort !== 'none' ? 'active' : ''}`}
+            onClick={toggleRatingSort}
+          >
+            <FontAwesomeIcon icon={faStar} />
+            {ratingSort === 'none' && 'Sort by Popularity'}
+            {ratingSort === 'desc' && 'Rating: High to Low'}
+            {ratingSort === 'asc' && 'Rating: Low to High'}
           </button>
         </div>
       </div>

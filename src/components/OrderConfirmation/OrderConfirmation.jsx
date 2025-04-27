@@ -110,14 +110,10 @@ function OrderConfirmation() {
             tax: 0,
             total: 0,
             items: [],
-            shippingDetails: {
-              fullName: 'Customer',
-              address: '123 Main St',
-              city: 'Anytown',
-              state: 'ST',
-              zipCode: '12345',
-              country: 'Country',
-              phone: '555-123-4567'
+            shippingAddress: {
+              street: 'Please contact support for address details',
+              city: '',
+              postalCode: ''
             }
           });
           setOrderStatus('processing');
@@ -245,11 +241,10 @@ function OrderConfirmation() {
             
             <div class="shipping-info">
               <h3>Shipping Information</h3>
-              <p>${order.shippingDetails?.fullName}</p>
-              <p>${order.shippingDetails?.address}</p>
-              <p>${order.shippingDetails?.city}, ${order.shippingDetails?.state} ${order.shippingDetails?.zipCode}</p>
-              <p>${order.shippingDetails?.country}</p>
-              <p>Phone: ${order.shippingDetails?.phone}</p>
+              <p>${order.user?.name || 'Customer'}</p>
+              <p>${order.shippingAddress?.street || 'No address available'}</p>
+              <p>${order.shippingAddress?.city || ''} ${order.shippingAddress?.postalCode || ''}</p>
+              <p>Phone: ${order.user?.phone || 'N/A'}</p>
             </div>
             
             <table>
@@ -460,11 +455,10 @@ function OrderConfirmation() {
           
           <div className="invoice-shipping-info">
             <h4>Ship To</h4>
-            <p>{order.shippingDetails?.fullName}</p>
-            <p>{order.shippingDetails?.address}</p>
-            <p>{order.shippingDetails?.city}, {order.shippingDetails?.state} {order.shippingDetails?.zipCode}</p>
-            <p>{order.shippingDetails?.country}</p>
-            <p>Phone: {order.shippingDetails?.phone}</p>
+            <p>{order.user?.name || 'Customer'}</p>
+            <p>{order.shippingAddress?.street || 'No address available'}</p>
+            <p>{order.shippingAddress?.city || ''} {order.shippingAddress?.postalCode || ''}</p>
+            <p>Phone: {order.user?.phone || 'N/A'}</p>
           </div>
           
           <table className="invoice-table">

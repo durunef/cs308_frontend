@@ -5,6 +5,7 @@ import { faCreditCard, faLock, faArrowLeft, faSpinner } from '@fortawesome/free-
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { checkout } from '../../api/orderService';
+import axios from '../../api/axios';
 import './Checkout.css';
 
 function Checkout() {
@@ -14,6 +15,36 @@ function Checkout() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
   const [step, setStep] = useState(1); // 1: Shipping, 2: Payment
+  const [authStatus, setAuthStatus] = useState(null);
+  
+  // Debug auth token
+  useEffect(() => {
+    const testAuth = async () => {
+      try {
+        const storedToken = localStorage.getItem('token');
+        console.log('Current auth state:', { 
+          isAuthenticated, 
+          userExists: !!user, 
+          tokenExists: !!token,
+          tokenInStorage: !!storedToken,
+          tokenFirstChars: storedToken ? storedToken.substring(0, 15) + '...' : 'none'
+        });
+        
+        // Test the token with a simple request
+        const response = await axios.get('/api/user/profile');
+        console.log('Auth test success:', response.data);
+        setAuthStatus('Token is valid');
+      } catch (err) {
+        console.error('Auth test failed:', err);
+        setAuthStatus(`Token error: ${err.message || 'Unknown error'}`);
+      }
+    };
+    
+    if (isAuthenticated) {
+      testAuth();
+    }
+  }, [isAuthenticated, user, token]);
+  
   const [formData, setFormData] = useState({
     // Shipping Details
     fullName: user?.name || '',
@@ -322,6 +353,23 @@ function Checkout() {
   return (
     <div className="checkout-container">
       <h1>Checkout</h1>
+      
+      {/* Debug section - only visible during development */}
+      {process.env.NODE_ENV !== 'production' && (
+        <div className="debug-panel" style={{ 
+          background: '#f0f0f0', 
+          padding: '10px', 
+          marginBottom: '15px', 
+          borderRadius: '5px',
+          fontSize: '12px' 
+        }}>
+          <h3>Auth Debug Info:</h3>
+          <p>Auth State: {isAuthenticated ? 'Authenticated ✓' : 'Not authenticated ✗'}</p>
+          <p>User: {user ? `${user.name} (${user.email})` : 'No user data'}</p>
+          <p>Token: {token ? `${token.substring(0, 10)}...` : 'No token'}</p>
+          <p>Auth Test: {authStatus || 'Not tested yet'}</p>
+        </div>
+      )}
       
       <div className="checkout-progress">
         <div className={`progress-step ${step >= 1 ? 'active' : ''}`}>

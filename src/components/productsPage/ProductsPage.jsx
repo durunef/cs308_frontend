@@ -6,16 +6,21 @@ import {
   faThList, 
   faSearch,
   faSortAmountDown,
-  faSortAmountUp
+  faSortAmountUp,
+  faStar
 } from "@fortawesome/free-solid-svg-icons";
 import { getAllProducts } from "../../api/productService";
+import { useLocation, useNavigate } from "react-router-dom";
 import "./ProductsPage.css"; 
 
 function ProductsPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [columns, setColumns] = useState(3); 
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [sortOrder, setSortOrder] = useState("none"); // "none", "asc", "desc"
+  const [ratingSort, setRatingSort] = useState("none"); // "none", "asc", "desc"
   const [filterValues, setFilterValues] = useState({
     type: "",
     subtype: "",
@@ -25,6 +30,19 @@ function ProductsPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Read search query from URL when component mounts
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const searchQuery = queryParams.get('search');
+    
+    if (searchQuery) {
+      setFilterValues(prev => ({
+        ...prev,
+        searchQuery
+      }));
+    }
+  }, [location.search]);
 
   // Load products data from backend
   useEffect(() => {
@@ -83,15 +101,22 @@ function ProductsPage() {
       );
     }
     
-    // Apply sorting
+    // Apply price sorting
     if (sortOrder === "asc") {
       result.sort((a, b) => a.price - b.price);
     } else if (sortOrder === "desc") {
       result.sort((a, b) => b.price - a.price);
     }
     
+    // Apply rating sorting
+    if (ratingSort === "desc") {
+      result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else if (ratingSort === "asc") {
+      result.sort((a, b) => (a.rating || 0) - (b.rating || 0));
+    }
+    
     setFilteredProducts(result);
-  }, [allProducts, filterValues, sortOrder]);
+  }, [allProducts, filterValues, sortOrder, ratingSort]);
 
   // Handler for filter changes
   const handleFilterChange = (e) => {
@@ -109,16 +134,38 @@ function ProductsPage() {
       ...prev,
       searchQuery: value
     }));
+    
+    // Update URL with search query parameter
+    const queryParams = new URLSearchParams(location.search);
+    if (value) {
+      queryParams.set('search', value);
+    } else {
+      queryParams.delete('search');
+    }
+    navigate({ search: queryParams.toString() }, { replace: true });
   };
 
   // Toggle sorting order
   const toggleSortOrder = () => {
     if (sortOrder === "none") {
       setSortOrder("asc");
+      setRatingSort("none"); // Reset rating sort when sorting by price
     } else if (sortOrder === "asc") {
       setSortOrder("desc");
     } else {
       setSortOrder("none");
+    }
+  };
+
+  // Toggle rating sorting order
+  const toggleRatingSort = () => {
+    if (ratingSort === "none") {
+      setRatingSort("desc"); // Start with highest rated first
+      setSortOrder("none"); // Reset price sort when sorting by rating
+    } else if (ratingSort === "desc") {
+      setRatingSort("asc");
+    } else {
+      setRatingSort("none");
     }
   };
 
@@ -132,6 +179,7 @@ function ProductsPage() {
       searchQuery: ""
     });
     setSortOrder("none");
+    setRatingSort("none");
   };
 
   // Set grid columns
@@ -263,6 +311,18 @@ function ProductsPage() {
                 </span>
               </button>
               
+              <button 
+                className="sort-button"
+                onClick={toggleRatingSort}
+              >
+                <FontAwesomeIcon icon={faStar} />
+                <span className="button-text">
+                  {ratingSort === "none" && "Sort by Popularity"}
+                  {ratingSort === "desc" && "Rating: High to Low"}
+                  {ratingSort === "asc" && "Rating: Low to High"}
+                </span>
+              </button>
+
               <button onClick={() => setGridColumns(3)}>
                 <FontAwesomeIcon icon={faTh} />
               </button>

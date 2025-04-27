@@ -37,6 +37,47 @@ function Profile() {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState(null);
+  const [addressCheckResult, setAddressCheckResult] = useState(null);
+
+  // Function to check and fix address issues on the server
+  const checkAndFixAddress = async () => {
+    if (!token) {
+      setAddressCheckResult('No authentication token available');
+      return;
+    }
+    
+    try {
+      setAddressCheckResult('Checking address...');
+      const response = await fetch('http://localhost:3000/api/user/check-address', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setAddressCheckResult(`Address check successful: ${data.message}`);
+        // Update the address state with the fixed data
+        if (data.data && data.data.user && data.data.user.address) {
+          setAddress({
+            street: data.data.user.address.street || "",
+            city: data.data.user.address.city || "",
+            postalCode: data.data.user.address.postalCode || ""
+          });
+          setMessage("Address format has been checked and fixed if needed");
+          setMessageType("success");
+        }
+      } else {
+        setAddressCheckResult(`Address check failed: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Error checking address:', error);
+      setAddressCheckResult(`Error: ${error.message}`);
+    }
+  };
 
   useEffect(() => {
     console.log('Profile component - Auth state:', { user, token, isAuthenticated });
@@ -302,13 +343,32 @@ function Profile() {
               />
             </div>
             
-            <button type="submit" className="profile-submit">
-              Save Changes
-            </button>
+            {/* Address Check Debug Section */}
+            <div className="profile-address-check">
+              <button 
+                type="button" 
+                className="check-address-btn"
+                onClick={checkAndFixAddress}
+              >
+                Check & Fix Address Issues
+              </button>
+              
+              {addressCheckResult && (
+                <div className="address-check-result">
+                  <p>{addressCheckResult}</p>
+                </div>
+              )}
+            </div>
             
             {message && (
-              <div className={`profile-message ${messageType}`}>{message}</div>
+              <div className={`profile-message ${messageType}`}>
+                {message}
+              </div>
             )}
+            
+            <button type="submit" className="profile-update-btn">
+              Update Address
+            </button>
           </form>
         )}
         

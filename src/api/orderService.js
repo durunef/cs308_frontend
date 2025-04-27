@@ -11,6 +11,23 @@ export const checkout = async (paymentDetails) => {
       throw new Error('You must be logged in to checkout');
     }
     
+    // Validate that the token hasn't expired (JWT tokens have an exp claim)
+    try {
+      // Simple validation check - actual validation happens server-side
+      // Just make sure it's a properly formatted JWT with 3 parts
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        console.error('Token format is invalid');
+        // Force logout and redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login?redirect=checkout&error=invalid_token';
+        throw new Error('Invalid token format');
+      }
+    } catch (tokenError) {
+      console.error('Error validating token:', tokenError);
+    }
+    
     // Log the request details
     console.log('Making checkout request to: /api/orders/checkout');
     console.log('With authorization header:', `Bearer ${token.substring(0, 10)}...`);
@@ -44,6 +61,12 @@ export const checkout = async (paymentDetails) => {
       cart: cartData || [],
       // Pass the current date to help with order creation
       orderDate: new Date().toISOString()
+    }, {
+      // Explicitly set the headers to ensure token is included
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
     });
     
     // Log the complete response for debugging
@@ -198,8 +221,8 @@ export const getOrderHistory = async () => {
       throw new Error('Authentication required to view order history');
     }
     
-    console.log('Making request to: /api/orders/history');
-    const response = await axios.get('/api/orders/history');
+    console.log('Making request to: /api/orders');
+    const response = await axios.get('/api/orders');
     console.log('Order history response received:', response.data);
     return response.data;
   } catch (error) {

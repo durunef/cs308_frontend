@@ -50,10 +50,23 @@ export const getCart = async () => {
     const cartId = localStorage.getItem('guestCartId');
     let endpoint = '/api/cart';
     
-    // If we're a guest user with a cart ID
-    if (!localStorage.getItem('token') && cartId) {
-      // Pass the cartId as a query parameter
-      endpoint = `/api/cart?cartId=${cartId}`;
+    // If we're a guest user
+    if (!localStorage.getItem('token')) {
+      // If we have a cartId, use it
+      if (cartId) {
+        endpoint = `/api/cart?cartId=${cartId}`;
+      } else {
+        // For guest users with no cartId, create a new cart instead of fetching
+        console.log('No cart ID for guest user, creating a new cart');
+        // Create an empty cart and return it
+        return {
+          status: 'success',
+          data: {
+            _id: null,
+            items: []
+          }
+        };
+      }
     }
     
     // Make the API call

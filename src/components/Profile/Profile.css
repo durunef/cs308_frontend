@@ -620,3 +620,53 @@
     flex-direction: column;
   }
 }
+
+/* Add these styles for the address check functionality */
+.profile-address-check {
+  margin: 20px 0;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  border: 1px dashed #ccc;
+}
+
+.check-address-btn {
+  background-color: #ffa260;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.check-address-btn:hover {
+  background-color: #ff8c3f;
+}
+
+.address-check-result {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.profile-update-btn {
+  background-color: #4a7c59;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.profile-update-btn:hover {
+  background-color: #3a6a49;
+}
