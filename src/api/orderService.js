@@ -120,12 +120,35 @@ export const submitProductComment = async (productId, comment) => {
 
 /**
  * Invoice PDF'ini indirir (blob).
+ * Not: API henüz hazır değilse 404 hatası dönebilir, bu durumda HTML versiyonunu kullanabilirsiniz.
  */
 export const downloadInvoice = async (orderId) => {
-  const response = await axios.get(`/api/orders/${orderId}/invoice`, {
-    responseType: 'blob'
-  });
-  return response.data;
+  try {
+    // Check if we're in development mode (using localhost)
+    const isDev = window.location.hostname === 'localhost';
+
+    // Use the proper URL based on the environment
+    const url = isDev 
+      ? `http://localhost:3000/invoices/invoice-${orderId}.pdf` // Direct path to backend's static files
+      : `/api/orders/${orderId}/invoice`; // Production API endpoint
+      
+    console.log(`Requesting invoice from: ${url}`);
+    
+    const response = await axios.get(url, {
+      responseType: 'blob'
+    });
+    return response.data;
+  } catch (error) {
+    console.log(`Invoice download error for order ${orderId}:`, error.message || 'Unknown error');
+    
+    // If we get a 404, that means the PDF isn't generated yet
+    if (error.response && error.response.status === 404) {
+      console.log('Invoice PDF not available yet for order:', orderId);
+    }
+    
+    // Rethrow to let component handle it
+    throw error;
+  }
 };
 
 /**

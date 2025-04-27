@@ -18,6 +18,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { getOrderDetails, downloadInvoice, getOrderStatus, emailInvoice } from '../../api/orderService';
 import './OrderConfirmation.css';
+import axios from 'axios';
 
 function OrderConfirmation() {
   const { orderId } = useParams();
@@ -294,24 +295,58 @@ function OrderConfirmation() {
   const handleDownloadInvoice = async () => {
     try {
       setDownloadingInvoice(true);
-      const pdfBlob = await downloadInvoice(orderId);
       
-      // Create a URL for the blob
-      const pdfUrl = URL.createObjectURL(pdfBlob);
+      // Try direct file access first in development mode
+      const isDev = window.location.hostname === 'localhost';
+      if (isDev) {
+        try {
+          const directUrl = `http://localhost:3000/invoices/invoice-${orderId}.pdf`;
+          console.log('Attempting to download PDF directly from:', directUrl);
+          
+          // Check if the file exists
+          await axios.head(directUrl);
+          
+          // If it exists, trigger direct download
+          console.log('Direct PDF download');
+          const link = document.createElement('a');
+          link.href = directUrl;
+          link.download = `invoice-${orderId}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          return;
+        } catch (directErr) {
+          console.log('Direct PDF URL not accessible for download, falling back to API:', directErr.message);
+        }
+      }
       
-      // Create a temporary link and trigger download
-      const link = document.createElement('a');
-      link.href = pdfUrl;
-      link.download = `invoice-${orderId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      
-      // Clean up
-      document.body.removeChild(link);
-      URL.revokeObjectURL(pdfUrl);
-    } catch (err) {
-      console.error('Error downloading invoice:', err);
-      alert('Failed to download invoice. Please try again later.');
+      // If direct access failed or not in dev mode, fall back to API
+      try {
+        const pdfBlob = await downloadInvoice(orderId);
+        
+        // Create a URL for the blob
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        
+        // Create a temporary link and trigger download
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.download = `invoice-${orderId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        
+        // Clean up
+        document.body.removeChild(link);
+        URL.revokeObjectURL(pdfUrl);
+      } catch (err) {
+        // Handle 404 errors specifically
+        if (err.response && err.response.status === 404) {
+          console.log('Invoice PDF not found on the server (404).');
+          alert('The invoice PDF is not available yet. You can use the Print Invoice option instead.');
+        } else {
+          console.error('Error downloading invoice:', err);
+          alert('Failed to download invoice. Please try again later or use the Print Invoice option.');
+        }
+      }
     } finally {
       setDownloadingInvoice(false);
     }
@@ -484,14 +519,43 @@ function OrderConfirmation() {
       setPdfError(null);
       console.log('Loading PDF invoice for order:', orderId);
       
-      const pdfBlob = await downloadInvoice(orderId);
-      const url = URL.createObjectURL(pdfBlob);
+      // First try to use the URL directly if we're in development
+      const isDev = window.location.hostname === 'localhost';
+      if (isDev) {
+        // First attempt: Try the direct URL
+        try {
+          const directUrl = `http://localhost:3000/invoices/invoice-${orderId}.pdf`;
+          console.log('Attempting to load PDF directly from:', directUrl);
+          
+          // Test if the file exists with a HEAD request
+          await axios.head(directUrl);
+          
+          // If it exists, use this URL directly
+          console.log('Direct PDF URL is accessible');
+          setPdfUrl(directUrl);
+          return;
+        } catch (directErr) {
+          console.log('Direct PDF URL not accessible, falling back to API:', directErr.message);
+        }
+      }
       
-      console.log('PDF blob created with URL:', url);
-      setPdfUrl(url);
-    } catch (err) {
-      console.error('Error loading PDF invoice:', err);
-      setPdfError('Could not load the invoice PDF. You can still view the order details above.');
+      // If direct URL failed or we're not in dev mode, try the API
+      try {
+        const pdfBlob = await downloadInvoice(orderId);
+        const url = URL.createObjectURL(pdfBlob);
+        
+        console.log('PDF blob created with URL:', url);
+        setPdfUrl(url);
+      } catch (err) {
+        // Handle 404 errors specifically
+        if (err.response && err.response.status === 404) {
+          console.log('Invoice PDF not found on the server (404). Showing HTML version instead.');
+          setPdfError('The invoice PDF is not available yet. Using the HTML version below.');
+        } else {
+          console.error('Error loading PDF invoice:', err);
+          setPdfError('Could not load the invoice PDF. Using the HTML version below.');
+        }
+      }
     } finally {
       setPdfLoading(false);
     }
@@ -743,6 +807,11 @@ function OrderConfirmation() {
               width="100%" 
               height="600px" 
               title="Invoice PDF"
+              onError={(e) => {
+                console.error('Error loading PDF in iframe:', e);
+                setPdfError('The PDF viewer encountered an error. Using the HTML version below.');
+                setPdfUrl(null);
+              }}
             ></iframe>
           </div>
         )}
@@ -753,71 +822,74 @@ function OrderConfirmation() {
           </div>
         )}
         
-        <div className="invoice-container" ref={invoiceRef}>
-          <div className="invoice-header">
-            <h3>Invoice #{order.orderNumber || order._id}</h3>
-            <p className="invoice-date">Date: {formatDate(order.createdAt)}</p>
-          </div>
-          
-          <div className="invoice-shipping-info">
-            <h4>Ship To</h4>
-            <p>{order.user?.name || sessionStorage.getItem('userName') || 'Customer'}</p>
-            <p>{order.shippingAddress?.street || 'No address available'}</p>
-            <p>
-              {order.shippingAddress?.city || ''} 
-              {order.shippingAddress?.city && order.shippingAddress?.postalCode ? ', ' : ''}
-              {order.shippingAddress?.postalCode || ''}
-            </p>
-            <p>Phone: {order.user?.phone || sessionStorage.getItem('userPhone') || 'N/A'}</p>
-          </div>
-          
-          <table className="invoice-table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Quantity</th>
-                <th>Price</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {order.items && order.items.map((item, index) => (
-                <tr key={index}>
-                  <td className="item-name">{item.product.name}</td>
-                  <td>{item.quantity}</td>
-                  <td>${(item.priceAtPurchase || item.product.price).toFixed(2)}</td>
-                  <td>${((item.priceAtPurchase || item.product.price) * item.quantity).toFixed(2)}</td>
+        {/* Always show the HTML invoice if PDF is not available or loading failed */}
+        {(!pdfUrl || pdfError) && (
+          <div className="invoice-container" ref={invoiceRef}>
+            <div className="invoice-header">
+              <h3>Invoice #{order.orderNumber || order._id}</h3>
+              <p className="invoice-date">Date: {formatDate(order.createdAt)}</p>
+            </div>
+            
+            <div className="invoice-shipping-info">
+              <h4>Ship To</h4>
+              <p>{order.user?.name || sessionStorage.getItem('userName') || 'Customer'}</p>
+              <p>{order.shippingAddress?.street || 'No address available'}</p>
+              <p>
+                {order.shippingAddress?.city || ''} 
+                {order.shippingAddress?.city && order.shippingAddress?.postalCode ? ', ' : ''}
+                {order.shippingAddress?.postalCode || ''}
+              </p>
+              <p>Phone: {order.user?.phone || sessionStorage.getItem('userPhone') || 'N/A'}</p>
+            </div>
+            
+            <table className="invoice-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Quantity</th>
+                  <th>Price</th>
+                  <th>Total</th>
                 </tr>
-              ))}
-              <tr className="subtotal-row">
-                <td colSpan="3">Subtotal</td>
-                <td>${(order.subtotal || 0).toFixed(2)}</td>
-              </tr>
-              <tr>
-                <td colSpan="3">Shipping</td>
-                <td>${(order.shippingCost || 0).toFixed(2)}</td>
-              </tr>
-              <tr>
-                <td colSpan="3">Tax</td>
-                <td>${(order.tax || 0).toFixed(2)}</td>
-              </tr>
-              <tr className="total-row">
-                <td colSpan="3">Total</td>
-                <td>${(order.total || 0).toFixed(2)}</td>
-              </tr>
-            </tbody>
-          </table>
-          
-          <div className="invoice-footer">
-            <p>
-              <strong>Status:</strong> 
-              <span className={getStatusClass(orderStatus)}>
-                {orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)}
-              </span>
-            </p>
-            <p>Thank you for your business!</p>
+              </thead>
+              <tbody>
+                {order.items && order.items.map((item, index) => (
+                  <tr key={index}>
+                    <td className="item-name">{item.product.name}</td>
+                    <td>{item.quantity}</td>
+                    <td>${(item.priceAtPurchase || item.product.price).toFixed(2)}</td>
+                    <td>${((item.priceAtPurchase || item.product.price) * item.quantity).toFixed(2)}</td>
+                  </tr>
+                ))}
+                <tr className="subtotal-row">
+                  <td colSpan="3">Subtotal</td>
+                  <td>${(order.subtotal || 0).toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td colSpan="3">Shipping</td>
+                  <td>${(order.shippingCost || 0).toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td colSpan="3">Tax</td>
+                  <td>${(order.tax || 0).toFixed(2)}</td>
+                </tr>
+                <tr className="total-row">
+                  <td colSpan="3">Total</td>
+                  <td>${(order.total || 0).toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <div className="invoice-footer">
+              <p>
+                <strong>Status:</strong> 
+                <span className={getStatusClass(orderStatus)}>
+                  {orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)}
+                </span>
+              </p>
+              <p>Thank you for your business!</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
       
       <div className="order-actions">
