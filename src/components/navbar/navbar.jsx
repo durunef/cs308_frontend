@@ -1,10 +1,9 @@
-// src/components/navbar/navbar.jsx
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { 
-  faShoppingCart, 
-  faUser, 
+import {
+  faShoppingCart,
+  faUser,
   faSignOutAlt,
   faHome,
   faBars,
@@ -22,26 +21,24 @@ function Navbar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleResize = () => {
+    const onResize = () => {
       if (window.innerWidth > 768 && isMobileMenuOpen) {
         setIsMobileMenuOpen(false);
       }
     };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, [isMobileMenuOpen]);
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
   return (
     <nav className="navbar">
       <div className="navbar-container">
-        {/* Mobile menu toggle */}
-        <button 
+        <button
           className="mobile-menu-toggle"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle menu"
@@ -49,22 +46,22 @@ function Navbar() {
           <FontAwesomeIcon icon={isMobileMenuOpen ? faTimes : faBars} />
         </button>
 
-        {/* Logo */}
         <Link to="/" className="navbar-logo">
           <span className="logo-text">Coffee Shop</span>
         </Link>
 
-        {/* Desktop Navigation */}
         <div className={`navbar-links desktop-links ${isMobileMenuOpen ? 'hidden' : ''}`}>
           <Link to="/" className="nav-link hover-effect">
             <FontAwesomeIcon icon={faHome} className="icon-margin-right" />
             Home
           </Link>
+
           <Link to="/cart" className="nav-link hover-effect cart-link">
             <FontAwesomeIcon icon={faShoppingCart} className="icon-margin-right" />
             Cart
             <span className="cart-count">{getCartTotalQuantity()}</span>
           </Link>
+
           {isAuthenticated ? (
             <>
               <Link to="/wishlist" className="nav-link hover-effect">
@@ -96,13 +93,9 @@ function Navbar() {
           )}
         </div>
 
-        {/* Mobile Side Menu */}
         <div className={`mobile-menu ${isMobileMenuOpen ? 'open' : ''}`}>
           <div className="mobile-menu-header">
-            <button 
-              className="close-menu-btn"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
+            <button className="close-menu-btn" onClick={() => setIsMobileMenuOpen(false)}>
               <FontAwesomeIcon icon={faTimes} />
             </button>
           </div>
@@ -111,45 +104,40 @@ function Navbar() {
               <FontAwesomeIcon icon={faHome} className="icon-margin-right" />
               Home
             </Link>
-            <Link to="/wishlist" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
-              Wishlist
+            <Link to="/cart" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+              <FontAwesomeIcon icon={faShoppingCart} className="icon-margin-right" />
+              Cart
+              <span className="cart-count">{getCartTotalQuantity()}</span>
             </Link>
-            <div className="mobile-user-actions">
-              <Link to="/cart" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
-                <FontAwesomeIcon icon={faShoppingCart} className="icon-margin-right" />
-                Cart
-                <span className="cart-count">{getCartTotalQuantity()}</span>
-              </Link>
-              {isAuthenticated ? (
-                <>
-                  <Link to="/profile" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
-                    <FontAwesomeIcon icon={faUser} className="icon-margin-right" />
-                    Profile
-                  </Link>
-                  <Link to="/add-product" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
-                    Add Product
-                  </Link>
-                  <button 
-                    className="mobile-nav-link mobile-logout"
-                    onClick={handleLogout}
-                  >
-                    <FontAwesomeIcon icon={faSignOutAlt} className="icon-margin-right" />
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link to="/login" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
-                    <FontAwesomeIcon icon={faUser} className="icon-margin-right" />
-                    Login
-                  </Link>
-                  <Link to="/register" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
-                    <FontAwesomeIcon icon={faUser} className="icon-margin-right" />
-                    Register
-                  </Link>
-                </>
-              )}
-            </div>
+
+            {isAuthenticated ? (
+              <>
+                <Link to="/wishlist" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                  Wishlist
+                </Link>
+                <Link to="/profile" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                  Profile
+                </Link>
+                <Link to="/add-product" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                  Add Product
+                </Link>
+                <button
+                  className="mobile-nav-link mobile-logout"
+                  onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                  Login
+                </Link>
+                <Link to="/register" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                  Register
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

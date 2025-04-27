@@ -1,47 +1,57 @@
-// src/api/cartService.js
-
 import axios from './axios';
 
-// auth’li ekleme → /api/cart/add
+/**
+ * Add to cart when authenticated.  Creates a cart if none yet.
+ */
 export const addToCartAuthenticated = async (productId, quantity) => {
   const response = await axios.post('/api/cart/add', { productId, quantity });
   return response.data;
 };
 
-// guest ekleme, guestCartId’yi localStorage’a kaydet
+/**
+ * Add to cart as guest.  Returns guestCartId in data._id, which we store.
+ */
 export const addToCartGuest = async (productId, quantity, cartId = null) => {
   const payload = { productId, quantity };
   if (cartId) payload.cartId = cartId;
-  const response = await axios.post('/api/cart/add', payload);
-  if (response.data?.status === 'success' && response.data.data?._id) {
-    localStorage.setItem('guestCartId', response.data.data._id);
+  const resp = await axios.post('/api/cart/add', payload);
+
+  if (resp.data?.status === 'success' && resp.data.data?._id) {
+    localStorage.setItem('guestCartId', resp.data.data._id);
   }
-  return response.data;
+  return resp.data;
 };
 
-// sepeti çek
+/**
+ * Fetch the cart:
+ *  - if logged in, GET /api/cart → user’s cart
+ *  - if guest & have guestCartId, GET /api/cart?cartId=… → guest’s cart
+ *  - else empty
+ */
 export const getCart = async () => {
   try {
-    const cartId = localStorage.getItem('guestCartId');
-    let endpoint = '/api/cart';
+    const guestId = localStorage.getItem('guestCartId');
+    let url = '/api/cart';
     if (!localStorage.getItem('token')) {
-      if (cartId) endpoint = `/api/cart?cartId=${cartId}`;
+      if (guestId) url = `/api/cart?cartId=${guestId}`;
       else return { status: 'success', data: { _id: null, items: [] } };
     }
-    const resp = await axios.get(endpoint);
+    const resp = await axios.get(url);
     return resp.data;
   } catch {
     return { status: 'error', data: { items: [] } };
   }
 };
 
-// miktar güncelle → /api/cart/update
+/**
+ * Update quantity of an existing line.
+ */
 export const updateCartItem = async (productId, quantity) => {
   try {
     const payload = { productId, quantity };
     if (!localStorage.getItem('token')) {
-      const cartId = localStorage.getItem('guestCartId');
-      if (cartId) payload.cartId = cartId;
+      const guestId = localStorage.getItem('guestCartId');
+      if (guestId) payload.cartId = guestId;
       else throw new Error('No cart ID for guest');
     }
     const resp = await axios.post('/api/cart/update', payload);
@@ -51,13 +61,15 @@ export const updateCartItem = async (productId, quantity) => {
   }
 };
 
-// sepetten çıkar → /api/cart/remove
+/**
+ * Remove a line-item.
+ */
 export const removeCartItem = async (productId) => {
   try {
     const payload = { productId };
     if (!localStorage.getItem('token')) {
-      const cartId = localStorage.getItem('guestCartId');
-      if (cartId) payload.cartId = cartId;
+      const guestId = localStorage.getItem('guestCartId');
+      if (guestId) payload.cartId = guestId;
     }
     const resp = await axios.post('/api/cart/remove', payload);
     return resp.data;
@@ -66,7 +78,12 @@ export const removeCartItem = async (productId) => {
   }
 };
 
-// **MERGE**: artık addToCartAuthenticated yerine updateCartItem kullanıyoruz!
+/**
+ * Merge the old guest cart into the now-logged-in user cart:
+ * 1) fetch guest cart via native fetch(...) so no JWT header is sent
+ * 2) for each guest line, call addToCartAuthenticated(...)
+ * 3) clear out guestCartId so we don’t merge again
+ */
 export const mergeGuestCart = async (guestCartId) => {
   try {
     const token = localStorage.getItem('token');
@@ -74,21 +91,26 @@ export const mergeGuestCart = async (guestCartId) => {
       throw new Error('Cannot merge: missing guestCartId or token');
     }
 
-    // önce guest sepetini çek
-    const resp = await axios.get(`/api/cart?cartId=${guestCartId}`);
-    if (resp.data?.status !== 'success') {
+    // 1) raw fetch → no axios interceptor → no Authorization header
+    const base = axios.defaults.baseURL || '';
+    const raw = await fetch(`${base}/api/cart?cartId=${guestCartId}`);
+    const guestResp = await raw.json();
+    if (guestResp.status !== 'success') {
       throw new Error('Failed to fetch guest cart');
     }
-    const guestItems = resp.data.data.items || [];
 
-    // her birini user cart’a **set** et
-    for (const item of guestItems) {
-      await updateCartItem(item.product._id, item.quantity);
+    const items = guestResp.data.items || [];
+
+    // 2) re-POST each into the authenticated user cart
+    for (const item of items) {
+      await addToCartAuthenticated(item.product._id || item.product, item.quantity);
     }
 
     return { status: 'success', message: 'Guest cart merged' };
   } catch (err) {
     console.error('Error merging guest cart:', err);
     return { status: 'error', message: err.message };
+  } finally {
+    localStorage.removeItem('guestCartId');
   }
 };

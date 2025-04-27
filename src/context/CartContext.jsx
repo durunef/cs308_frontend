@@ -17,9 +17,9 @@ export function useCart() {
 export function CartProvider({ children }) {
   const { isAuthenticated } = useAuth();
   const [cartItems, setCartItems] = useState([]);
-  const [cartId, setCartId] = useState(localStorage.getItem('guestCartId') || null);
+  const [cartId, setCartId]       = useState(localStorage.getItem('guestCartId') || null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError]         = useState(null);
 
   // 1) Sepeti getir
   const fetchCart = useCallback(async () => {
@@ -48,7 +48,7 @@ export function CartProvider({ children }) {
     }
   }, [isAuthenticated]);
 
-  // 2) Guest→User merge (sadece login sonrası bir kez)
+  // 2) Guest→User merge
   const mergeCartsOnLogin = useCallback(async () => {
     const guestCartId = localStorage.getItem('guestCartId');
     if (!guestCartId) return;
