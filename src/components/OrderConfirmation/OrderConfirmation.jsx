@@ -13,7 +13,8 @@ import {
   faShippingFast,
   faClipboardCheck,
   faEnvelope,
-  faPrint
+  faPrint,
+  faMapMarkerAlt
 } from '@fortawesome/free-solid-svg-icons';
 import { getOrderDetails, downloadInvoice, getOrderStatus, emailInvoice } from '../../api/orderService';
 import './OrderConfirmation.css';
@@ -21,16 +22,33 @@ import './OrderConfirmation.css';
 function OrderConfirmation() {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
-  const [orderStatus, setOrderStatus] = useState('processing');
+  const [orderStatus, setOrderStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
   const [emailingInvoice, setEmailingInvoice] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState(false);
   const invoiceRef = useRef(null);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState(null);
   
   // Debug message when component loads
   console.log(`OrderConfirmation component mounted with orderId: ${orderId}`);
+  
+  // Convert status to CSS class - same as in OrderHistory
+  const getStatusClass = (status) => {
+    switch(status.toLowerCase()) {
+      case 'processing':
+        return 'status-processing';
+      case 'in-transit':
+        return 'status-in-transit';
+      case 'delivered':
+        return 'status-delivered';
+      default:
+        return '';
+    }
+  };
   
   useEffect(() => {
     // Show alert to verify component is rendering
@@ -43,83 +61,170 @@ function OrderConfirmation() {
     const fetchOrderDetails = async () => {
       try {
         setLoading(true);
-        
-        // First try to get order from localStorage if API fails
-        const lastOrderId = localStorage.getItem('lastOrderId');
-        const cartItems = JSON.parse(localStorage.getItem('lastCartItems') || '[]');
-        const shippingDetails = JSON.parse(localStorage.getItem('lastShippingDetails') || '{}');
+        console.log('Fetching order details for:', orderId);
         
         let orderData = null;
-        let isFromLocalStorage = false;
         
+        // First, check sessionStorage for saved order data from OrderHistory
         try {
-          const response = await getOrderDetails(orderId);
+          const savedOrderJSON = sessionStorage.getItem('currentOrderDetail');
+          const savedOrderId = sessionStorage.getItem('currentOrderId');
           
-          if (response.status === 'success' && response.data) {
-            orderData = response.data;
-            console.log('Order details retrieved from API:', orderData);
+          if (savedOrderJSON && savedOrderId === orderId) {
+            const savedOrder = JSON.parse(savedOrderJSON);
+            console.log('Found saved order data in sessionStorage:', savedOrder);
+            orderData = savedOrder;
+          } else if (savedOrderId !== orderId) {
+            console.log('Saved order ID does not match current order ID');
           }
-        } catch (apiError) {
-          console.error('API error fetching order details:', apiError);
-          // If API fails, we'll use localStorage data below
+        } catch (storageError) {
+          console.error('Error retrieving order from sessionStorage:', storageError);
         }
         
-        // If we don't have data from API, try to create it from localStorage
-        if (!orderData && lastOrderId === orderId && cartItems.length > 0) {
-          console.log('Creating order data from localStorage');
+        // If we don't have data from sessionStorage, try the API
+        if (!orderData) {
+          try {
+            console.log('Making API call to getOrderDetails for order:', orderId);
+            const response = await getOrderDetails(orderId);
+            
+            console.log('API response for order details:', response);
+            
+            if (response.status === 'success' && response.data) {
+              orderData = response.data;
+              console.log('Order details retrieved from API:', orderData);
+            } else {
+              console.warn('API returned success but with invalid or empty data:', response);
+            }
+          } catch (apiError) {
+            console.error('API error fetching order details:', apiError);
+          }
           
-          isFromLocalStorage = true;
-          
-          // Calculate order totals
-          const subtotal = cartItems.reduce((total, item) => {
-            return total + (item.product.price * item.quantity);
-          }, 0);
-          
-          const tax = subtotal * 0.08; // Assuming 8% tax rate
-          const shippingCost = 0; // Free shipping
-          const total = subtotal + tax + shippingCost;
-          
-          orderData = {
-            _id: orderId,
-            orderNumber: `ORD-${orderId.substring(0, 8)}`,
-            createdAt: new Date().toISOString(),
-            status: 'processing',
-            subtotal,
-            tax,
-            shippingCost,
-            total,
-            items: cartItems,
-            shippingDetails
-          };
+          if (!orderData) {
+            console.log('Attempting to fetch order status directly...');
+            try {
+              const statusResponse = await getOrderStatus(orderId);
+              console.log('Status API response:', statusResponse);
+              
+              if (statusResponse.status === 'success' && statusResponse.data) {
+                console.log('Retrieved status:', statusResponse.data.status);
+              }
+            } catch (statusError) {
+              console.error('Error fetching order status:', statusError);
+            }
+          }
         }
         
+        // If we have data from API or sessionStorage, ensure it's properly structured
         if (orderData) {
-          setOrder(orderData);
-          setOrderStatus(orderData.status || 'processing');
-          console.log('Order data set:', orderData);
+          // Ensure all required fields are present
+          const enhancedOrder = {
+            ...orderData,
+            // Add orderNumber if missing
+            orderNumber: orderData.orderNumber || `ORD-${orderData._id.substring(0, 8)}`,
+            
+            // Ensure shipping address is properly structured
+            shippingAddress: orderData.shippingAddress || orderData.shippingDetails?.address || {
+              street: orderData.shippingDetails?.street || '',
+              city: orderData.shippingDetails?.city || '',
+              postalCode: orderData.shippingDetails?.postalCode || ''
+            },
+            
+            // Ensure the order always has a status
+            status: orderData.status || 'processing',
+            
+            // Ensure user information is properly structured
+            user: {
+              ...(orderData.user || {}),
+              // If user is a string ID, create a proper user object
+              name: typeof orderData.user === 'object' ? 
+                orderData.user.name || sessionStorage.getItem('userName') || 'Customer' :
+                sessionStorage.getItem('userName') || 'Customer',
+              email: typeof orderData.user === 'object' ? 
+                orderData.user.email || sessionStorage.getItem('userEmail') || '' : 
+                sessionStorage.getItem('userEmail') || '',
+              phone: typeof orderData.user === 'object' ? 
+                orderData.user.phone || '' : ''
+            }
+          };
+          
+          // Calculate financials only if they're missing
+          if (!enhancedOrder.subtotal || enhancedOrder.subtotal === 0) {
+            enhancedOrder.subtotal = calculateSubtotal(enhancedOrder.items);
+          }
+          
+          if (!enhancedOrder.tax) {
+            enhancedOrder.tax = enhancedOrder.subtotal * 0.08;
+          }
+          
+          if (!enhancedOrder.shippingCost) {
+            enhancedOrder.shippingCost = 5.99;
+          }
+          
+          // Always recalculate total to ensure it's the sum of components
+          enhancedOrder.total = enhancedOrder.subtotal + enhancedOrder.tax + enhancedOrder.shippingCost;
+          
+          console.log('Order components:', { 
+            subtotal: enhancedOrder.subtotal,
+            tax: enhancedOrder.tax,
+            shipping: enhancedOrder.shippingCost,
+            total: enhancedOrder.total
+          });
+          
+          console.log('Setting enhanced order data with status:', enhancedOrder.status);
+          setOrder(enhancedOrder);
+          setOrderStatus(enhancedOrder.status);
         } else {
-          // Create a default order as last resort
-          console.log('No order data available, creating minimal fallback');
-          setOrder({
+          // Attempt to create a valid fallback from available data
+          console.log('No order data available, creating fallback from orderId:', orderId);
+          
+          // Try to get status one last time
+          let fallbackStatus = 'processing';
+          try {
+            const statusResponse = await getOrderStatus(orderId);
+            if (statusResponse.status === 'success' && statusResponse.data && statusResponse.data.status) {
+              fallbackStatus = statusResponse.data.status;
+              console.log('Using status from direct API call:', fallbackStatus);
+            }
+          } catch (statusError) {
+            console.log('Could not get status, using default:', fallbackStatus);
+          }
+          
+          const fallbackOrder = {
             _id: orderId,
             orderNumber: `ORD-${orderId.substring(0, 8)}`,
             createdAt: new Date().toISOString(),
-            status: 'processing',
+            status: fallbackStatus,
             subtotal: 0,
-            shippingCost: 0,
+            shippingCost: 5.99,
             tax: 0,
-            total: 0,
+            total: 5.99, // subtotal(0) + tax(0) + shipping(5.99)
             items: [],
             shippingAddress: {
               street: 'Please contact support for address details',
               city: '',
               postalCode: ''
+            },
+            user: {
+              name: sessionStorage.getItem('userName') || 'Customer',
+              email: sessionStorage.getItem('userEmail') || '',
+              phone: sessionStorage.getItem('userPhone') || ''
             }
-          });
-          setOrderStatus('processing');
+          };
+          
+          // Store this fallback in sessionStorage for consistency
+          try {
+            sessionStorage.setItem('currentOrderDetail', JSON.stringify(fallbackOrder));
+            sessionStorage.setItem('currentOrderId', orderId);
+            console.log('Saved fallback order to sessionStorage');
+          } catch (err) {
+            console.error('Error saving fallback to sessionStorage:', err);
+          }
+          
+          setOrder(fallbackOrder);
+          setOrderStatus(fallbackStatus);
         }
       } catch (err) {
-        console.error('Error fetching order:', err);
+        console.error('Error in fetchOrderDetails:', err);
         setError('We could not find your order. Please contact customer support.');
       } finally {
         setLoading(false);
@@ -131,31 +236,60 @@ function OrderConfirmation() {
     }
   }, [orderId]);
   
-  // Fetch order status periodically
+  // Fetch order status only if it wasn't provided in the order details
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId || !order) return;
     
     const fetchStatus = async () => {
       try {
+        console.log('Attempting to fetch status for order:', orderId);
+        
+        // Skip the status request if we already have a valid status
+        if (order.status && ['processing', 'in-transit', 'delivered'].includes(order.status.toLowerCase())) {
+          console.log('Using existing status from order:', order.status);
+          return;
+        }
+        
         const response = await getOrderStatus(orderId);
-        if (response.status === 'success') {
-          setOrderStatus(response.data.status);
+        if (response.status === 'success' && response.data) {
+          console.log('Got updated status from API:', response.data.status);
+          // Only update status if it's different from what we already have
+          if (response.data.status !== orderStatus) {
+            setOrderStatus(response.data.status);
+            // Also update order object to have consistent status
+            setOrder(prevOrder => ({
+              ...prevOrder,
+              status: response.data.status
+            }));
+          }
         }
       } catch (err) {
         console.error('Error fetching order status:', err);
+        if (err.response && err.response.status === 404) {
+          console.log('Status endpoint returned 404, using order status from main data');
+          // Keep using the current status, it's fine
+        }
         // Don't set error here to avoid disrupting the UI on status check failures
       }
     };
     
-    // Initial status fetch
+    // Initial status fetch - only if needed
     fetchStatus();
     
-    // Set up polling every 30 seconds
-    const statusInterval = setInterval(fetchStatus, 30000);
+    // Set up polling with less frequent intervals (every 60 seconds instead of 30)
+    // and only if we don't have a "delivered" status yet
+    let statusInterval;
+    if (orderStatus !== 'delivered') {
+      statusInterval = setInterval(fetchStatus, 60000); // Check every 60 seconds
+    }
     
     // Clean up interval on component unmount
-    return () => clearInterval(statusInterval);
-  }, [orderId]);
+    return () => {
+      if (statusInterval) {
+        clearInterval(statusInterval);
+      }
+    };
+  }, [orderId, order, orderStatus]);
   
   const handleDownloadInvoice = async () => {
     try {
@@ -210,6 +344,18 @@ function OrderConfirmation() {
   
   const handlePrintInvoice = () => {
     const printWindow = window.open('', '_blank');
+    
+    // Create a safe item price getter function to avoid errors
+    const getItemPrice = (item) => {
+      return item.priceAtPurchase || item.product.price || 0;
+    };
+    
+    // Get correct order totals
+    const subtotal = order.subtotal || 0;
+    const tax = order.tax || 0;
+    const shipping = order.shippingCost || 0;
+    const total = order.total || (subtotal + tax + shipping);
+    
     printWindow.document.write(`
       <html>
         <head>
@@ -224,6 +370,9 @@ function OrderConfirmation() {
             .header { display: flex; justify-content: space-between; }
             .order-info { margin: 20px 0; }
             .shipping-info { margin: 20px 0; }
+            .status-processing { color: #f57c00; font-weight: bold; }
+            .status-in-transit { color: #1565c0; font-weight: bold; }
+            .status-delivered { color: #2e7d32; font-weight: bold; }
             @media print {
               body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
             }
@@ -241,10 +390,10 @@ function OrderConfirmation() {
             
             <div class="shipping-info">
               <h3>Shipping Information</h3>
-              <p>${order.user?.name || 'Customer'}</p>
+              <p>${order.user?.name || sessionStorage.getItem('userName') || 'Customer'}</p>
               <p>${order.shippingAddress?.street || 'No address available'}</p>
               <p>${order.shippingAddress?.city || ''} ${order.shippingAddress?.postalCode || ''}</p>
-              <p>Phone: ${order.user?.phone || 'N/A'}</p>
+              <p>Phone: ${order.user?.phone || sessionStorage.getItem('userPhone') || 'N/A'}</p>
             </div>
             
             <table>
@@ -257,35 +406,35 @@ function OrderConfirmation() {
                 </tr>
               </thead>
               <tbody>
-                ${order.items.map(item => `
+                ${order.items && order.items.map(item => `
                   <tr>
                     <td>${item.product.name}</td>
                     <td>${item.quantity}</td>
-                    <td>$${item.product.price.toFixed(2)}</td>
-                    <td>$${(item.quantity * item.product.price).toFixed(2)}</td>
+                    <td>$${(item.priceAtPurchase || item.product.price).toFixed(2)}</td>
+                    <td>$${((item.priceAtPurchase || item.product.price) * item.quantity).toFixed(2)}</td>
                   </tr>
                 `).join('')}
                 <tr>
                   <td colspan="3" style="text-align: right;">Subtotal</td>
-                  <td>$${(order.subtotal || calculateSubtotal(order.items)).toFixed(2)}</td>
+                  <td>$${subtotal.toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td colspan="3" style="text-align: right;">Shipping</td>
-                  <td>$${(order.shippingCost || 0).toFixed(2)}</td>
+                  <td>$${shipping.toFixed(2)}</td>
                 </tr>
                 <tr>
                   <td colspan="3" style="text-align: right;">Tax</td>
-                  <td>$${(order.tax || 0).toFixed(2)}</td>
+                  <td>$${tax.toFixed(2)}</td>
                 </tr>
                 <tr class="total-row">
                   <td colspan="3" style="text-align: right;">Total</td>
-                  <td>$${(order.total || calculateTotal(order)).toFixed(2)}</td>
+                  <td>$${total.toFixed(2)}</td>
                 </tr>
               </tbody>
             </table>
             
             <div>
-              <p><strong>Status:</strong> ${orderStatus}</p>
+              <p><strong>Status:</strong> <span class="${getStatusClass(orderStatus)}">${orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)}</span></p>
               <p>Thank you for your business!</p>
             </div>
           </div>
@@ -326,6 +475,52 @@ function OrderConfirmation() {
     return subtotal + shipping + tax;
   };
   
+  // Add a function to load the PDF invoice
+  const loadPdfInvoice = async () => {
+    if (!orderId) return;
+    
+    try {
+      setPdfLoading(true);
+      setPdfError(null);
+      console.log('Loading PDF invoice for order:', orderId);
+      
+      const pdfBlob = await downloadInvoice(orderId);
+      const url = URL.createObjectURL(pdfBlob);
+      
+      console.log('PDF blob created with URL:', url);
+      setPdfUrl(url);
+    } catch (err) {
+      console.error('Error loading PDF invoice:', err);
+      setPdfError('Could not load the invoice PDF. You can still view the order details above.');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+  
+  // Load the PDF when component mounts and we have order data
+  useEffect(() => {
+    if (order && !pdfUrl && !pdfLoading) {
+      loadPdfInvoice();
+    }
+    
+    // Clean up the PDF URL when component unmounts
+    return () => {
+      if (pdfUrl) {
+        console.log('Revoking PDF blob URL');
+        URL.revokeObjectURL(pdfUrl);
+      }
+    };
+  }, [order, pdfUrl, pdfLoading, orderId]);
+  
+  // Add a cleanup effect to remove session data when component unmounts
+  useEffect(() => {
+    return () => {
+      // No need to clean up sessionStorage when unmounting
+      // It will persist until navigation but be cleaned when browser closes
+      console.log('Component unmounting');
+    };
+  }, []);
+  
   if (loading) {
     return (
       <div className="order-confirmation-container">
@@ -360,6 +555,59 @@ function OrderConfirmation() {
         <p className="confirmation-subheader">Thank you for your purchase.</p>
         <p className="order-id">Order #: {order.orderNumber || orderId}</p>
         <p className="email-message">An email confirmation has been sent to your email address.</p>
+      </div>
+      
+      {/* Order Summary */}
+      <div className="order-summary-section">
+        <div className="order-summary-columns">
+          <div className="order-summary-column">
+            <h3><FontAwesomeIcon icon={faMapMarkerAlt} /> Shipping Address</h3>
+            <div className="shipping-address-display">
+              <p className="customer-name">{order.user?.name || 'Customer'}</p>
+              <p>{order.shippingAddress?.street || 'No address available'}</p>
+              <p>
+                {order.shippingAddress?.city || ''} 
+                {order.shippingAddress?.city && order.shippingAddress?.postalCode ? ', ' : ''}
+                {order.shippingAddress?.postalCode || ''}
+              </p>
+              {order.user?.phone && <p>Phone: {order.user.phone}</p>}
+            </div>
+          </div>
+          
+          <div className="order-summary-column">
+            <h3><FontAwesomeIcon icon={faTruck} /> Order Status</h3>
+            <div className="status-display">
+              <p className={`order-current-status ${getStatusClass(orderStatus)}`}>
+                {orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)}
+              </p>
+              <p className="status-date">
+                Order Date: {formatDate(order.createdAt)}
+              </p>
+            </div>
+          </div>
+          
+          <div className="order-summary-column">
+            <h3><FontAwesomeIcon icon={faFileInvoice} /> Order Total</h3>
+            <div className="total-summary">
+              <div className="total-row">
+                <span>Subtotal:</span>
+                <span>${(order.subtotal || 0).toFixed(2)}</span>
+              </div>
+              <div className="total-row">
+                <span>Shipping:</span>
+                <span>${(order.shippingCost || 0).toFixed(2)}</span>
+              </div>
+              <div className="total-row">
+                <span>Tax:</span>
+                <span>${(order.tax || 0).toFixed(2)}</span>
+              </div>
+              <div className="total-row grand-total">
+                <span>Total:</span>
+                <span>${(order.total || 0).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       
       {/* Order Timeline */}
@@ -402,6 +650,30 @@ function OrderConfirmation() {
         </div>
       </div>
       
+      {/* Order Items Section - Moved here */}
+      <div className="order-items-section">
+        <h2>Order Items</h2>
+        <div className="order-items-container">
+          {order.items && order.items.map((item, index) => (
+            <div key={index} className="order-item">
+              <img 
+                src={item.product.image} 
+                alt={item.product.name} 
+                className="order-item-image" 
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/100x100?text=Product';
+                }}
+              />
+              <div className="order-item-details">
+                <h3 className="order-item-name">{item.product.name}</h3>
+                <p className="order-item-price">${(item.priceAtPurchase || item.product.price).toFixed(2)} x {item.quantity}</p>
+                <p className="order-item-total">Total: ${((item.priceAtPurchase || item.product.price) * item.quantity).toFixed(2)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
       {/* Invoice Section */}
       <div className="invoice-section">
         <h2>Invoice</h2>
@@ -439,7 +711,41 @@ function OrderConfirmation() {
             )}
             Email Invoice
           </button>
+          
+          {!pdfUrl && !pdfLoading && !pdfError && (
+            <button 
+              className="invoice-action-button" 
+              onClick={loadPdfInvoice}
+            >
+              <FontAwesomeIcon icon={faFileInvoice} />
+              View PDF
+            </button>
+          )}
         </div>
+        
+        {pdfLoading && (
+          <div className="pdf-loading">
+            <FontAwesomeIcon icon={faSpinner} spin /> Loading invoice PDF...
+          </div>
+        )}
+        
+        {pdfError && (
+          <div className="pdf-error">
+            <FontAwesomeIcon icon={faExclamationTriangle} /> {pdfError}
+          </div>
+        )}
+        
+        {pdfUrl && (
+          <div className="pdf-viewer-container">
+            <iframe 
+              src={pdfUrl} 
+              className="pdf-viewer" 
+              width="100%" 
+              height="600px" 
+              title="Invoice PDF"
+            ></iframe>
+          </div>
+        )}
         
         {emailSuccess && (
           <div className="email-success-message">
@@ -455,10 +761,14 @@ function OrderConfirmation() {
           
           <div className="invoice-shipping-info">
             <h4>Ship To</h4>
-            <p>{order.user?.name || 'Customer'}</p>
+            <p>{order.user?.name || sessionStorage.getItem('userName') || 'Customer'}</p>
             <p>{order.shippingAddress?.street || 'No address available'}</p>
-            <p>{order.shippingAddress?.city || ''} {order.shippingAddress?.postalCode || ''}</p>
-            <p>Phone: {order.user?.phone || 'N/A'}</p>
+            <p>
+              {order.shippingAddress?.city || ''} 
+              {order.shippingAddress?.city && order.shippingAddress?.postalCode ? ', ' : ''}
+              {order.shippingAddress?.postalCode || ''}
+            </p>
+            <p>Phone: {order.user?.phone || sessionStorage.getItem('userPhone') || 'N/A'}</p>
           </div>
           
           <table className="invoice-table">
@@ -471,17 +781,17 @@ function OrderConfirmation() {
               </tr>
             </thead>
             <tbody>
-              {order.items.map((item, index) => (
+              {order.items && order.items.map((item, index) => (
                 <tr key={index}>
                   <td className="item-name">{item.product.name}</td>
                   <td>{item.quantity}</td>
-                  <td>${item.product.price.toFixed(2)}</td>
-                  <td>${(item.quantity * item.product.price).toFixed(2)}</td>
+                  <td>${(item.priceAtPurchase || item.product.price).toFixed(2)}</td>
+                  <td>${((item.priceAtPurchase || item.product.price) * item.quantity).toFixed(2)}</td>
                 </tr>
               ))}
               <tr className="subtotal-row">
                 <td colSpan="3">Subtotal</td>
-                <td>${(order.subtotal || calculateSubtotal(order.items)).toFixed(2)}</td>
+                <td>${(order.subtotal || 0).toFixed(2)}</td>
               </tr>
               <tr>
                 <td colSpan="3">Shipping</td>
@@ -493,43 +803,25 @@ function OrderConfirmation() {
               </tr>
               <tr className="total-row">
                 <td colSpan="3">Total</td>
-                <td>${(order.total || calculateTotal(order)).toFixed(2)}</td>
+                <td>${(order.total || 0).toFixed(2)}</td>
               </tr>
             </tbody>
           </table>
           
           <div className="invoice-footer">
-            <p><strong>Status:</strong> {orderStatus}</p>
+            <p>
+              <strong>Status:</strong> 
+              <span className={getStatusClass(orderStatus)}>
+                {orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)}
+              </span>
+            </p>
             <p>Thank you for your business!</p>
           </div>
         </div>
       </div>
       
-      <div className="order-items-section">
-        <h2>Order Items</h2>
-        <div className="order-items-container">
-          {order.items.map((item, index) => (
-            <div key={index} className="order-item">
-              <img 
-                src={item.product.image} 
-                alt={item.product.name} 
-                className="order-item-image" 
-                onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/100x100?text=Product';
-                }}
-              />
-              <div className="order-item-details">
-                <h3 className="order-item-name">{item.product.name}</h3>
-                <p className="order-item-price">${item.product.price.toFixed(2)} x {item.quantity}</p>
-                <p className="order-item-total">Total: ${(item.product.price * item.quantity).toFixed(2)}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      
       <div className="order-actions">
-        <Link to="/order-history" className="view-orders-button">
+        <Link to="/profile?tab=orders" className="view-orders-button">
           View All Orders
         </Link>
         <Link to="/" className="continue-shopping-button">

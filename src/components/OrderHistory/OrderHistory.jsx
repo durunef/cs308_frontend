@@ -1,25 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faFileInvoice, faSpinner, faExclamationTriangle, faArrowLeft, faShoppingBag, faSync } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faEye, 
+  faFileInvoice, 
+  faSpinner, 
+  faExclamationTriangle, 
+  faArrowLeft, 
+  faShoppingBag, 
+  faSync,
+  faMapMarkerAlt,
+  faPhone,
+  faInfoCircle,
+  faBoxOpen
+} from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
 import { getOrderHistory, downloadInvoice, getOrderStatus } from '../../api/orderService';
 import './OrderHistory.css';
 
 function OrderHistory() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const location = useLocation();
+  const { isAuthenticated, user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshingStatus, setRefreshingStatus] = useState(false);
+  const [expandedOrder, setExpandedOrder] = useState(null);
+  
+  // Check if component is being rendered inside profile page
+  const isInsideProfile = location.pathname.includes('/profile');
   
   // Redirect if not authenticated
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !isInsideProfile) {
       navigate('/login?redirect=order-history');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, isInsideProfile]);
   
   // Fetch order history
   useEffect(() => {
@@ -29,10 +46,54 @@ function OrderHistory() {
         const response = await getOrderHistory();
         
         if (response.status === 'success') {
-          setOrders(response.data);
+          // Ensure we have proper data structure for each order
+          const enhancedOrders = response.data.map(order => {
+            // Add orderNumber if missing
+            if (!order.orderNumber) {
+              order.orderNumber = `ORD-${order._id.substring(0, 8)}`;
+            }
+            
+            // Calculate subtotal if missing
+            if (!order.subtotal && order.items && order.items.length > 0) {
+              order.subtotal = order.items.reduce((sum, item) => {
+                return sum + (item.priceAtPurchase || item.product.price) * item.quantity;
+              }, 0);
+            }
+            
+            // Add tax if missing
+            if (!order.tax && order.subtotal) {
+              order.tax = order.subtotal * 0.08; // Assuming 8% tax
+            }
+            
+            // Add shipping cost if missing
+            if (!order.shippingCost) {
+              order.shippingCost = 5.99;
+            }
+            
+            // Calculate total if missing
+            if (!order.total) {
+              const subtotal = order.subtotal || 0;
+              const tax = order.tax || 0;
+              const shipping = order.shippingCost || 0;
+              order.total = subtotal + tax + shipping;
+              console.log(`Calculated total for order ${order._id}: ${order.total}`);
+            }
+            
+            // Always verify total is correct (in case components changed)
+            const calculatedTotal = (order.subtotal || 0) + (order.tax || 0) + (order.shippingCost || 0);
+            if (Math.abs(calculatedTotal - order.total) > 0.01) { // Allow for tiny floating point differences
+              console.log(`Correcting total for order ${order._id}: ${order.total} -> ${calculatedTotal}`);
+              order.total = calculatedTotal;
+            }
+            
+            return order;
+          });
+          
+          setOrders(enhancedOrders);
+          
           // After loading orders, fetch their status
-          if (response.data.length > 0) {
-            fetchOrderStatuses(response.data);
+          if (enhancedOrders.length > 0) {
+            fetchOrderStatuses(enhancedOrders);
           }
         } else {
           throw new Error('Failed to fetch order history');
@@ -58,8 +119,18 @@ function OrderHistory() {
       for (let i = 0; i < updatedOrders.length; i++) {
         const order = updatedOrders[i];
         try {
+          // First check if the order already has a status we can use
+          if (order.status) {
+            console.log(`Order ${order._id} already has status: ${order.status}`);
+            continue; // Skip API call if we already have a status
+          }
+          
+          // Try to get status from API
+          console.log(`Fetching status for order ${order._id}`);
           const statusResponse = await getOrderStatus(order._id);
+          
           if (statusResponse.status === 'success' && statusResponse.data) {
+            console.log(`Successfully got status for order ${order._id}: ${statusResponse.data.status}`);
             updatedOrders[i] = {
               ...order,
               status: statusResponse.data.status || order.status
@@ -67,7 +138,9 @@ function OrderHistory() {
           }
         } catch (err) {
           console.error(`Error fetching status for order ${order._id}:`, err);
-          // Keep the existing status if there's an error
+          // If we hit a 404, it means the endpoint doesn't exist yet
+          // In this case, just keep using the status from the order object
+          console.log(`Will use existing status for order ${order._id}: ${order.status || 'processing'}`);
         }
       }
       
@@ -83,7 +156,32 @@ function OrderHistory() {
     
     try {
       setRefreshingStatus(true);
-      await fetchOrderStatuses(orders);
+      console.log('Manually refreshing order statuses...');
+      
+      // Create a copy of orders with status field cleared to force refresh
+      const ordersForRefresh = orders.map(order => ({
+        ...order,
+        _isRefreshing: true // Add a flag to indicate this is a refresh
+      }));
+      
+      // Show a temporary "refreshing" state in the UI
+      setOrders(ordersForRefresh);
+      
+      // Wait a moment to show the refreshing state
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Try to refresh statuses
+      try {
+        await fetchOrderStatuses(orders);
+        console.log('Order statuses refreshed successfully');
+      } catch (refreshError) {
+        console.error('Error during status refresh:', refreshError);
+        // Restore original orders if refresh fails
+        setOrders(orders.map(order => ({
+          ...order,
+          _isRefreshing: false
+        })));
+      }
     } catch (err) {
       console.error('Error refreshing order statuses:', err);
     } finally {
@@ -132,6 +230,37 @@ function OrderHistory() {
         return 'status-delivered';
       default:
         return '';
+    }
+  };
+  
+  const toggleOrderDetails = (orderId) => {
+    if (expandedOrder === orderId) {
+      setExpandedOrder(null);
+    } else {
+      setExpandedOrder(orderId);
+    }
+  };
+  
+  // Add a function to save order data for detail view that persists when navigating 
+  const saveOrderForDetailView = (order) => {
+    if (!order) return;
+    
+    try {
+      // Store in sessionStorage to persist through navigation but not browser close
+      sessionStorage.setItem('currentOrderDetail', JSON.stringify(order));
+      // Store orderId separately so we can verify correct order
+      sessionStorage.setItem('currentOrderId', order._id);
+      
+      // Also store user information separately for better access
+      if (user) {
+        sessionStorage.setItem('userName', user.name || '');
+        sessionStorage.setItem('userEmail', user.email || '');
+        sessionStorage.setItem('userPhone', user.phone || '');
+      }
+      
+      console.log('Saved order to sessionStorage for detail view:', order);
+    } catch (err) {
+      console.error('Error saving order to sessionStorage:', err);
     }
   };
   
@@ -190,60 +319,134 @@ function OrderHistory() {
         </div>
       ) : (
         <div className="orders-list">
-          <div className="order-header-row">
-            <div className="order-header-column">Order #</div>
-            <div className="order-header-column">Date</div>
-            <div className="order-header-column">Items</div>
-            <div className="order-header-column">Total</div>
-            <div className="order-header-column">Status</div>
-            <div className="order-header-column">Actions</div>
-          </div>
-          
           {orders.map(order => (
-            <div key={order._id} className="order-row">
-              <div className="order-column" data-label="Order #">{order.orderNumber}</div>
-              <div className="order-column" data-label="Date">{formatDate(order.createdAt)}</div>
-              <div className="order-column items-preview" data-label="Items">
-                {order.items && order.items.length > 0 ? (
-                  <div className="items-preview-container">
-                    {order.items.map((item, idx) => idx < 2 && (
-                      <div key={idx} className="item-preview">
-                        <span className="item-name">{item.product.name}</span>
-                        <span className="item-qty">×{item.quantity}</span>
+            <div key={order._id} className="order-card">
+              <div 
+                className="order-card-header"
+                onClick={() => toggleOrderDetails(order._id)}
+              >
+                <div className="order-basic-info">
+                  <div className="order-number-date">
+                    <h3 className="order-number">Order #{order.orderNumber || order._id.substring(0, 8)}</h3>
+                    <span className="order-date">{formatDate(order.createdAt)}</span>
+                  </div>
+                  <div className="order-status-total">
+                    <span className={`order-status ${getStatusClass(order.status)}`}>
+                      {order.status}
+                    </span>
+                    <span className="order-total">${(order.total || 0).toFixed(2)}</span>
+                  </div>
+                </div>
+                
+                <div className="order-preview">
+                  <div className="items-preview">
+                    {order.items && order.items.length > 0 ? (
+                      <div className="items-preview-container">
+                        {order.items.map((item, idx) => idx < 2 && (
+                          <div key={idx} className="item-preview">
+                            <span className="item-name">{item.product.name}</span>
+                            <span className="item-qty">×{item.quantity}</span>
+                          </div>
+                        ))}
+                        {order.items.length > 2 && (
+                          <div className="more-items">+{order.items.length - 2} more</div>
+                        )}
                       </div>
-                    ))}
-                    {order.items.length > 2 && (
-                      <div className="more-items">+{order.items.length - 2} more</div>
+                    ) : (
+                      <span className="no-items">No items</span>
                     )}
                   </div>
-                ) : (
-                  <span>0 item(s)</span>
-                )}
+                  
+                  <div className="order-actions">
+                    <Link 
+                      to={`/order-confirmation/${order._id}`} 
+                      className="view-details-button"
+                      title="View Order Details"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        saveOrderForDetailView(order);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faEye} /> Details
+                    </Link>
+                    <button
+                      className="download-invoice-button"
+                      onClick={(e) => handleDownloadInvoice(order._id, e)}
+                      title="Download Invoice"
+                    >
+                      <FontAwesomeIcon icon={faFileInvoice} /> Invoice
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="order-column total-column" data-label="Total">
-                ${(order.total || 0).toFixed(2)}
-              </div>
-              <div className="order-column" data-label="Status">
-                <span className={`order-status ${getStatusClass(order.status)}`}>
-                  {order.status}
-                </span>
-              </div>
-              <div className="order-column order-actions" data-label="Actions">
-                <Link 
-                  to={`/order-confirmation/${order._id}`} 
-                  className="view-details-button"
-                  title="View Order Details"
-                >
-                  <FontAwesomeIcon icon={faEye} />
-                </Link>
-                <button
-                  className="download-invoice-button"
-                  onClick={(e) => handleDownloadInvoice(order._id, e)}
-                  title="Download Invoice"
-                >
-                  <FontAwesomeIcon icon={faFileInvoice} />
-                </button>
-              </div>
+              
+              {expandedOrder === order._id && (
+                <div className="order-detail-panel">
+                  <div className="order-details-grid">
+                    <div className="detail-section shipping-info">
+                      <h4><FontAwesomeIcon icon={faMapMarkerAlt} /> Shipping Address</h4>
+                      <p className="customer-name">{user?.name || 'Customer'}</p>
+                      <p>{order.shippingAddress?.street || 'No address available'}</p>
+                      <p>
+                        {order.shippingAddress?.city || ''} 
+                        {order.shippingAddress?.city && order.shippingAddress?.postalCode ? ', ' : ''}
+                        {order.shippingAddress?.postalCode || ''}
+                      </p>
+                      {user?.phone && <p><FontAwesomeIcon icon={faPhone} /> {user.phone}</p>}
+                    </div>
+                    
+                    <div className="detail-section order-summary">
+                      <h4><FontAwesomeIcon icon={faInfoCircle} /> Order Summary</h4>
+                      <div className="summary-row">
+                        <span>Subtotal:</span>
+                        <span>${(order.subtotal || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="summary-row">
+                        <span>Shipping:</span>
+                        <span>${(order.shippingCost || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="summary-row">
+                        <span>Tax:</span>
+                        <span>${(order.tax || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="summary-row total-row">
+                        <span>Total:</span>
+                        <span>${(order.total || 0).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="detail-section items-list">
+                    <h4><FontAwesomeIcon icon={faBoxOpen} /> Items</h4>
+                    <div className="order-items">
+                      {order.items && order.items.length > 0 ? (
+                        <table className="items-table">
+                          <thead>
+                            <tr>
+                              <th>Product</th>
+                              <th>Quantity</th>
+                              <th>Price</th>
+                              <th>Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {order.items.map((item, idx) => (
+                              <tr key={idx}>
+                                <td>{item.product.name}</td>
+                                <td>{item.quantity}</td>
+                                <td>${(item.priceAtPurchase || item.product.price).toFixed(2)}</td>
+                                <td>${((item.priceAtPurchase || item.product.price) * item.quantity).toFixed(2)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <p className="no-items-message">No items in this order</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

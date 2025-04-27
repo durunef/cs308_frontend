@@ -4,17 +4,17 @@
   margin: 2rem auto;
   padding: 1.5rem;
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .profile-heading {
-  font-size: 1.8rem;
+  font-size: 2rem;
   font-weight: 700;
   color: #6b3e20;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   padding-bottom: 0.75rem;
-  border-bottom: 2px solid #8b5a2b;
+  border-bottom: 2px solid #d4b59e;
   display: flex;
   align-items: center;
 }
@@ -22,17 +22,19 @@
 .coffee-icon {
   margin-right: 0.75rem;
   color: #8b5a2b;
+  font-size: 1.8rem;
 }
 
+/* Profile Tabs */
 .profile-tabs {
   display: flex;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   border-bottom: 1px solid #d4b59e;
-  overflow-x: auto;
+  gap: 0.5rem;
 }
 
 .profile-tab {
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1.25rem;
   background: none;
   border: none;
   border-bottom: 3px solid transparent;
@@ -40,7 +42,10 @@
   color: #5a3921;
   cursor: pointer;
   transition: all 0.3s ease;
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
 }
 
 .profile-tab:hover {
@@ -51,29 +56,117 @@
 .profile-tab.active {
   border-bottom: 3px solid #8b5a2b;
   color: #8b5a2b;
-  font-weight: bold;
+  font-weight: 600;
   background-color: #f9f5f1;
 }
 
-.profile-tab svg {
-  margin-right: 0.5rem;
-}
-
+/* Profile Content */
 .profile-content {
-  padding: 1rem 0;
   min-height: 400px;
 }
 
+/* Personal Info Section */
+.personal-info-section {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.profile-card {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  border: 1px solid #f0e6dc;
+}
+
+.profile-card-header {
+  background-color: #f9f5f1;
+  padding: 1.25rem;
+  border-bottom: 1px solid #f0e6dc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-card-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #6b3e20;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.edit-profile-button {
+  background-color: #8b5a2b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.edit-profile-button:hover {
+  background-color: #6b3e20;
+}
+
+.profile-card-content {
+  padding: 1.5rem;
+}
+
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-detail-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.profile-detail-item .field-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: #8b5a2b;
+  margin-top: 0.25rem;
+}
+
+.profile-detail-item label {
+  display: block;
+  font-weight: 600;
+  color: #6b3e20;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.profile-detail-item p {
+  margin: 0;
+  color: #333;
+  font-size: 1rem;
+}
+
+.empty-address {
+  font-style: italic;
+  color: #999;
+}
+
+/* Profile Form */
 .profile-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: 600px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .profile-field {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .profile-field label {
@@ -81,47 +174,167 @@
   font-weight: 600;
   color: #5a3921;
   margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .profile-field input {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #d4b59e;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 1rem;
   background-color: #fff;
+  transition: border-color 0.2s;
 }
 
-.field-icon {
-  margin-right: 0.5rem;
-  color: #8b5a2b;
+.profile-field input:focus {
+  outline: none;
+  border-color: #8b5a2b;
+  box-shadow: 0 0 0 2px rgba(139, 90, 43, 0.2);
+}
+
+.profile-field input::placeholder {
+  color: #bbbbbb;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
 .profile-submit {
   background-color: #8b5a2b;
   color: white;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1.25rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.3s;
-  align-self: flex-start;
-  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .profile-submit:hover {
   background-color: #6b3e20;
 }
 
+.cancel-button {
+  background-color: #f1e4d8;
+  color: #6b3e20;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.cancel-button:hover {
+  background-color: #e6d2c0;
+}
+
+.profile-message {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin: 1rem 0;
+  font-size: 0.875rem;
+}
+
+.profile-message.success {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.profile-message.error {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
 /* Order History Styles */
-.order-history h2,
-.account-settings h2 {
+.order-history {
+  padding: 0 1rem;
+}
+
+.order-history h2 {
   margin-bottom: 1.5rem;
-  color: #8b5a2b;
+  color: #6b3e20;
   font-size: 1.5rem;
-  border-bottom: 1px solid #d4b59e;
-  padding-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.order-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  background-color: #f9f5f1;
+  padding: 1rem;
+  border-radius: 8px;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.order-search {
+  position: relative;
+  flex: 1;
+  min-width: 250px;
+}
+
+.order-search input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border: 1px solid #d4b59e;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.order-search input:focus {
+  outline: none;
+  border-color: #8b5a2b;
+  box-shadow: 0 0 0 2px rgba(139, 90, 43, 0.2);
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #8b5a2b;
+}
+
+.order-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.order-sort label {
+  font-size: 0.875rem;
+  color: #6b3e20;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.order-sort select {
+  padding: 0.65rem 1rem;
+  border: 1px solid #d4b59e;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background-color: white;
+  color: #5a3921;
+  cursor: pointer;
 }
 
 .order-list {
@@ -131,19 +344,25 @@
 }
 
 .order-item {
-  background-color: #f9f5f1;
+  background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 1rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  padding: 1.25rem;
   border-left: 4px solid #8b5a2b;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.order-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .order-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e6d2c0;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f0e6dc;
 }
 
 .order-id {
@@ -151,18 +370,24 @@
   color: #6b3e20;
 }
 
+.order-date {
+  color: #7d7d7d;
+  font-size: 0.875rem;
+}
+
 .order-items {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin: 0.5rem 0;
+  margin: 1rem 0;
 }
 
 .order-item-entry {
-  background-color: #fff;
-  padding: 4px 8px;
+  background-color: #f9f5f1;
+  padding: 0.5rem 0.75rem;
   border-radius: 16px;
   font-size: 0.875rem;
+  color: #5a3921;
   border: 1px solid #e6d2c0;
 }
 
@@ -170,9 +395,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid #e6d2c0;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f0e6dc;
 }
 
 .order-total {
@@ -182,10 +407,12 @@
 }
 
 .order-status {
+  padding: 0.35rem 0.75rem;
+  border-radius: 16px;
+  font-size: 0.75rem;
   font-weight: 600;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .status-delivered {
@@ -193,70 +420,203 @@
   color: #2e7d32;
 }
 
+.status-in-transit {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
 .status-processing {
   background-color: #fff8e1;
   color: #f57c00;
 }
 
-.status-cancelled {
-  background-color: #ffebee;
-  color: #c62828;
-}
-
 .view-order-button {
   background-color: #8b5a2b;
   color: white;
-  padding: 0.5rem 0.75rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  padding: 0.5rem 0.85rem;
+  border-radius: 6px;
   font-size: 0.875rem;
-  transition: background-color 0.3s;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
 }
 
 .view-order-button:hover {
   background-color: #6b3e20;
+  color: white;
+  text-decoration: none;
 }
 
-/* Account Settings Styles */
-.settings-section {
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
   background-color: #f9f5f1;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 1rem;
+  border: 1px dashed #d4b59e;
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+  color: #d4b59e;
   margin-bottom: 1rem;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+}
+
+.empty-state p {
+  color: #6b3e20;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.shop-now-button {
+  background-color: #8b5a2b;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-block;
+  transition: background-color 0.2s;
+}
+
+.shop-now-button:hover {
+  background-color: #6b3e20;
+  color: white;
+  text-decoration: none;
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: #8b5a2b;
+}
+
+.loading-spinner svg {
+  font-size: 2rem;
+}
+
+/* Auth Required */
+.auth-required {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.auth-message {
+  text-align: center;
+  padding: 2rem;
+  background-color: #f9f5f1;
+  border-radius: 8px;
+  max-width: 400px;
+  border: 1px solid #e6d2c0;
+}
+
+.auth-message svg {
+  font-size: 2.5rem;
+  color: #8b5a2b;
+  margin-bottom: 1rem;
+}
+
+.auth-message h2 {
+  color: #6b3e20;
+  margin-bottom: 0.5rem;
+}
+
+.auth-message p {
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.auth-button {
+  background-color: #8b5a2b;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-block;
+  transition: background-color 0.2s;
+}
+
+.auth-button:hover {
+  background-color: #6b3e20;
+  color: white;
+  text-decoration: none;
+}
+
+/* Account Settings */
+.account-settings {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.settings-section {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  border: 1px solid #f0e6dc;
 }
 
 .settings-section h3 {
   margin-top: 0;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
   color: #6b3e20;
-  border-bottom: 1px solid #d4b59e;
-  padding-bottom: 0.5rem;
+  font-size: 1.25rem;
+  border-bottom: 1px solid #f0e6dc;
+  padding-bottom: 0.75rem;
+}
+
+.settings-section p {
+  color: #666;
+  margin-bottom: 1.25rem;
 }
 
 .preference-option {
   display: flex;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .preference-option input {
-  margin-right: 0.5rem;
+  margin-right: 0.75rem;
   accent-color: #8b5a2b;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.preference-option label {
+  color: #333;
 }
 
 .change-password-button {
   background-color: #8b5a2b;
   color: white;
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem 1.25rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
 }
 
 .change-password-button:hover {
@@ -264,329 +624,38 @@
 }
 
 .danger-zone {
-  border: 1px solid #e53935;
-  background-color: #fff;
+  border-left: 4px solid #c62828;
 }
 
 .delete-account-button {
-  background-color: #e53935;
+  background-color: #f44336;
   color: white;
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem 1.25rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.2s;
 }
 
 .delete-account-button:hover {
-  background-color: #c62828;
+  background-color: #d32f2f;
 }
 
-/* Messages */
-.profile-message {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  border-radius: 4px;
-  font-weight: 600;
-  text-align: center;
-}
-
-.profile-message.success {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-}
-
-.profile-message.error {
+/* Error State */
+.error-state {
+  padding: 1.25rem;
   background-color: #ffebee;
+  border-radius: 8px;
   color: #c62828;
-}
-
-.profile-message.info {
-  background-color: #e6d2c0;
-  color: #6b3e20;
-}
-
-/* Empty states */
-.empty-state {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 2rem;
-  background-color: #f9f5f1;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.empty-icon {
-  font-size: 3rem;
-  color: #d4b59e;
+  gap: 0.75rem;
   margin-bottom: 1rem;
+  border: 1px solid #ffcdd2;
 }
 
-.shop-now-button {
-  background-color: #8b5a2b;
-  color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 1rem;
-  transition: background-color 0.3s;
-}
-
-.shop-now-button:hover {
-  background-color: #6b3e20;
-}
-
-/* Address management styles */
-.addresses-section {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.addresses-section h2 {
-  color: #8b5a2b;
-  border-bottom: 1px solid #d4b59e;
-  padding-bottom: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.addresses-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.address-card {
-  background-color: #f9f5f1;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 1rem;
-  position: relative;
-  border-left: 4px solid #d4b59e;
-  transition: all 0.3s ease;
-}
-
-.address-card:hover {
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
-}
-
-.default-address {
-  border-left: 4px solid #8b5a2b;
-  background-color: #f3e9df;
-}
-
-.default-badge {
-  position: absolute;
-  top: -0.5rem;
-  right: 1rem;
-  background-color: #8b5a2b;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.address-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.address-header h3 {
-  margin: 0;
-  color: #6b3e20;
-}
-
-.address-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.edit-button,
-.delete-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 0.25rem;
-  color: #8b5a2b;
-  transition: color 0.2s;
-}
-
-.edit-button:hover {
-  color: #6b3e20;
-}
-
-.delete-button:hover {
-  color: #c62828;
-}
-
-.delete-button:disabled {
-  color: #d4b59e;
-  cursor: not-allowed;
-}
-
-.address-details {
-  color: #5a3921;
-  margin-bottom: 0.75rem;
-}
-
-.address-details p {
-  margin: 0.25rem 0;
-}
-
-.make-default-button {
-  background-color: transparent;
-  color: #8b5a2b;
-  border: 1px solid #8b5a2b;
-  padding: 0.5rem 0.75rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: all 0.3s;
-}
-
-.make-default-button:hover {
-  background-color: #f3e9df;
-}
-
-.add-address-button {
-  background-color: #8b5a2b;
-  color: white;
-  padding: 0.75rem 1rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 1rem 0;
-  transition: background-color 0.3s;
-}
-
-.add-address-button:hover {
-  background-color: #6b3e20;
-}
-
-.address-form-container {
-  background-color: #f9f5f1;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-top: 1.5rem;
-  border: 1px solid #d4b59e;
-}
-
-.address-form-container h3 {
-  margin-top: 0;
-  color: #6b3e20;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid #d4b59e;
-  padding-bottom: 0.5rem;
-}
-
-.address-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.form-group {
-  margin-bottom: 0.5rem;
-}
-
-.form-group label {
-  display: block;
-  font-weight: 600;
-  color: #5a3921;
-  margin-bottom: 0.25rem;
-}
-
-.form-group input[type="text"] {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #d4b59e;
-  border-radius: 4px;
-  font-size: 1rem;
-  background-color: #fff;
-}
-
-.checkbox-group {
-  display: flex;
-  align-items: center;
-  margin: 0.5rem 0;
-}
-
-.checkbox-group input {
-  margin-right: 0.5rem;
-  accent-color: #8b5a2b;
-}
-
-.checkbox-group label {
-  margin-bottom: 0;
-}
-
-.form-buttons {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.save-address-button {
-  background-color: #8b5a2b;
-  color: white;
-  padding: 0.75rem 1rem;
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.save-address-button:hover {
-  background-color: #6b3e20;
-}
-
-.cancel-button {
-  background-color: transparent;
-  color: #8b5a2b;
-  padding: 0.75rem 1rem;
-  border: 1px solid #8b5a2b;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.cancel-button:hover {
-  background-color: #f3e9df;
-}
-
-.address-message {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  border-radius: 4px;
-  font-weight: 600;
-  text-align: center;
-}
-
-.address-message.success {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-}
-
-/* Responsive adjustments */
+/* Responsive Styles */
 @media (max-width: 768px) {
   .profile-container {
     padding: 1rem;
@@ -594,79 +663,66 @@
   }
   
   .profile-tabs {
-    flex-wrap: wrap;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
   }
   
   .profile-tab {
-    flex-grow: 1;
-    text-align: center;
-    padding: 0.5rem;
+    padding: 0.65rem 1rem;
     font-size: 0.875rem;
+  }
+  
+  .order-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .order-sort {
+    justify-content: space-between;
   }
   
   .order-header {
     flex-direction: column;
+    gap: 0.5rem;
   }
   
-  .addresses-list {
-    grid-template-columns: 1fr;
+  .order-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
   }
   
-  .form-row {
-    grid-template-columns: 1fr;
+  .view-order-button {
+    align-self: stretch;
+    justify-content: center;
+  }
+  
+  .profile-detail-item {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .profile-detail-item .field-icon {
+    margin-bottom: 0.25rem;
+  }
+  
+  .profile-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .edit-profile-button {
+    align-self: stretch;
+    justify-content: center;
   }
   
   .form-buttons {
     flex-direction: column;
   }
-}
-
-/* Add these styles for the address check functionality */
-.profile-address-check {
-  margin: 20px 0;
-  padding: 10px;
-  background-color: #f9f9f9;
-  border-radius: 5px;
-  border: 1px dashed #ccc;
-}
-
-.check-address-btn {
-  background-color: #ffa260;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s;
-}
-
-.check-address-btn:hover {
-  background-color: #ff8c3f;
-}
-
-.address-check-result {
-  margin-top: 10px;
-  padding: 10px;
-  background-color: #f0f0f0;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.profile-update-btn {
-  background-color: #4a7c59;
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: bold;
-  transition: background-color 0.3s;
-  width: 100%;
-  margin-top: 20px;
-}
-
-.profile-update-btn:hover {
-  background-color: #3a6a49;
+  
+  .form-buttons button {
+    width: 100%;
+    justify-content: center;
+  }
 }
