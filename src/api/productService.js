@@ -53,4 +53,135 @@ export const deleteProduct = async (productId) => {
     console.error(`Error deleting product with ID ${productId}:`, error);
     throw error;
   }
+};
+
+// Submit a review (rating and comment)
+export const submitReview = async (productId, review) => {
+  try {
+    const response = await axios.post(`/api/products/${productId}/reviews`, review);
+    return response.data;
+  } catch (error) {
+    console.error(`Error submitting review for product ${productId}:`, error);
+    throw error;
+  }
+};
+
+// Get reviews for a product
+export const getProductReviews = async (productId) => {
+  try {
+    const response = await axios.get(`/api/products/${productId}/reviews`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching reviews for product ${productId}:`, error);
+    throw error;
+  }
+};
+
+// Approve a review (manager only)
+export const approveReview = async (reviewId) => {
+  try {
+    const response = await axios.post(`/api/reviews/${reviewId}/approve`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error approving review ${reviewId}:`, error);
+    throw error;
+  }
+};
+
+// Reject a review (manager only)
+export const rejectReview = async (reviewId) => {
+  try {
+    const response = await axios.post(`/api/reviews/${reviewId}/reject`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error rejecting review ${reviewId}:`, error);
+    throw error;
+  }
+};
+
+// Search and filter products (client-side implementation)
+export const searchProducts = (products, searchQuery, filters = {}) => {
+  if (!products || !Array.isArray(products)) return [];
+  
+  let filteredProducts = [...products];
+  
+  // Text search (name or description)
+  if (searchQuery) {
+    const query = searchQuery.toLowerCase();
+    filteredProducts = filteredProducts.filter(product => 
+      product.name.toLowerCase().includes(query) || 
+      (product.description && product.description.toLowerCase().includes(query))
+    );
+  }
+  
+  // Price range filter
+  if (filters.minPrice) {
+    filteredProducts = filteredProducts.filter(product => 
+      product.price >= parseFloat(filters.minPrice)
+    );
+  }
+  
+  if (filters.maxPrice) {
+    filteredProducts = filteredProducts.filter(product => 
+      product.price <= parseFloat(filters.maxPrice)
+    );
+  }
+  
+  // Category filter
+  if (filters.category) {
+    filteredProducts = filteredProducts.filter(product => 
+      product.category === filters.category
+    );
+  }
+  
+  return filteredProducts;
+};
+
+// Sort products by various criteria
+export const sortProducts = (products, sortBy, order = 'asc') => {
+  if (!products || !Array.isArray(products)) return [];
+  
+  const sortedProducts = [...products];
+  
+  switch (sortBy) {
+    case 'price':
+      if (order === 'asc') {
+        sortedProducts.sort((a, b) => a.price - b.price);
+      } else {
+        sortedProducts.sort((a, b) => b.price - a.price);
+      }
+      break;
+      
+    case 'popularity':
+      // Sort by number of reviews, assuming more reviews = more popular
+      if (order === 'asc') {
+        sortedProducts.sort((a, b) => (a.reviews?.length || 0) - (b.reviews?.length || 0));
+      } else {
+        sortedProducts.sort((a, b) => (b.reviews?.length || 0) - (a.reviews?.length || 0));
+      }
+      break;
+      
+    case 'rating':
+      // Sort by average rating
+      if (order === 'asc') {
+        sortedProducts.sort((a, b) => (a.averageRating || 0) - (b.averageRating || 0));
+      } else {
+        sortedProducts.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
+      }
+      break;
+      
+    case 'name':
+      if (order === 'asc') {
+        sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+      } else {
+        sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
+      }
+      break;
+      
+    default:
+      // No sorting
+      break;
+  }
+  
+  return sortedProducts;
 }; 

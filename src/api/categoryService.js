@@ -3,7 +3,7 @@ import axios from './axios';
 // Get all categories
 export const getAllCategories = async () => {
   try {
-    const response = await axios.get('/api/category');
+    const response = await axios.get('/api/categories');
     return response.data;
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -19,7 +19,7 @@ export const getAllCategories = async () => {
 // Get products by category
 export const getProductsByCategory = async (categoryId) => {
   try {
-    const response = await axios.get(`/api/category/${categoryId}/products`);
+    const response = await axios.get(`/api/categories/${categoryId}/products`);
     return response.data;
   } catch (error) {
     console.error('Error fetching products by category:', error);
@@ -30,7 +30,7 @@ export const getProductsByCategory = async (categoryId) => {
 // Create a new category (if needed for admin features)
 export const createCategory = async (categoryData) => {
   try {
-    const response = await axios.post('/api/category', categoryData);
+    const response = await axios.post('/api/categories', categoryData);
     return response.data;
   } catch (error) {
     console.error('Error creating category:', error);

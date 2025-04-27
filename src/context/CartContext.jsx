@@ -5,7 +5,8 @@ import {
   addToCartGuest, 
   getCart,
   updateCartItem,
-  removeCartItem 
+  removeCartItem,
+  mergeGuestCart 
 } from '../api/cartService';
 
 // Create Context
@@ -24,11 +25,6 @@ export function CartProvider({ children }) {
   const [error, setError] = useState(null);
   const [lastFetchTime, setLastFetchTime] = useState(0);
   const [fetchAttempts, setFetchAttempts] = useState(0);
-  
-  // Load cart on mount and when auth status changes
-  useEffect(() => {
-    fetchCart(true);
-  }, [isAuthenticated]);
   
   // Fetch cart contents with debouncing and retry limiting
   const fetchCart = useCallback(async (force = false) => {
@@ -85,6 +81,57 @@ export function CartProvider({ children }) {
     }
   }, [cartItems.length, lastFetchTime, fetchAttempts, isAuthenticated]);
   
+  // Function to merge guest cart with user cart on login
+  const mergeCartsOnLogin = useCallback(async () => {
+    const guestCartId = localStorage.getItem('guestCartId');
+    
+    // Only attempt to merge if there's a guest cart
+    if (guestCartId) {
+      try {
+        console.log('Starting cart merge process...');
+        setIsLoading(true);
+        
+        // Call the mergeGuestCart function directly from the import
+        const mergeResult = await mergeGuestCart(guestCartId);
+        console.log('Merge result:', mergeResult);
+        
+        // Check for warnings (partial success)
+        if (mergeResult.warnings && mergeResult.warnings.length > 0) {
+          // Create a user-friendly message about items that couldn't be added
+          const warningMessage = `Some items couldn't be added to your cart due to stock limitations.`;
+          setError(warningMessage);
+          console.warn('Cart merge warnings:', mergeResult.warnings);
+        }
+        
+        // Always fetch the user's cart after attempting to merge, regardless of success/failure
+        await fetchCart();
+        
+      } catch (err) {
+        console.error('Error during cart merge:', err);
+        setError('Failed to merge your previous cart items. Please try adding them manually.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, [fetchCart]);
+  
+  // Load cart on mount and when auth status changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Check if there's a guest cart to merge
+      const guestCartId = localStorage.getItem('guestCartId');
+      if (guestCartId) {
+        mergeCartsOnLogin();
+      } else {
+        // If no guest cart, just fetch the user's cart
+        fetchCart(true);
+      }
+    } else {
+      // Not authenticated, just fetch the cart normally
+      fetchCart(true);
+    }
+  }, [isAuthenticated, fetchCart, mergeCartsOnLogin]);
+  
   // Add item to cart
   const addToCart = async (productId, quantity = 1) => {
     if (!productId) {
@@ -135,16 +182,26 @@ export function CartProvider({ children }) {
       return { success: false, error: 'Product ID is required' };
     }
     
-    if (quantity <= 0) {
-      return removeItem(productId);
-    }
-    
     try {
       setIsLoading(true);
       setError(null);
       
-      // Save current cart state for rollback if needed
-      const previousCartItems = [...cartItems];
+      // Find the current item to check stock limits
+      const currentItem = cartItems.find(item => item.product._id === productId);
+      if (!currentItem) {
+        console.error(`Product ${productId} not found in cart`);
+        return { success: false, error: 'Product not found in cart' };
+      }
+      
+      // Stock check
+      const availableStock = currentItem.product.quantityInStock || currentItem.product.quantity_in_stocks || 0;
+      if (quantity > availableStock) {
+        setError(`Cannot add more than ${availableStock} items (stock limit)`);
+        return { 
+          success: false, 
+          error: `Cannot add more than ${availableStock} items due to stock limit` 
+        };
+      }
       
       // Optimistic update for better UX
       const updatedCartItems = cartItems.map(item => 
@@ -170,21 +227,23 @@ export function CartProvider({ children }) {
           }
           return { success: true };
         } else if (response?.status === 'error') {
-          // API returned an error but we'll keep the optimistic update
-          console.warn('API returned error but keeping optimistic update:', response.message);
-          // Don't revert UI but do set an error message
+          // API returned an error - revert to previous state
+          console.warn('API returned error, reverting to previous state:', response.message);
+          fetchCart(); // Refresh cart from server
           setError(response.message || 'Could not update cart on server');
-          return { success: true, warning: 'Changes may not be saved to server' };
+          return { success: false, error: response.message || 'Could not update cart' };
         } else {
-          // Unexpected response format, but still keep optimistic update
-          console.warn('Unexpected API response format, keeping optimistic update');
-          return { success: true, warning: 'Changes may not be saved to server' };
+          // Unexpected response format - revert and refresh
+          console.warn('Unexpected API response format, refreshing cart');
+          fetchCart();
+          return { success: false, error: 'Unexpected server response' };
         }
       } catch (apiError) {
         console.error('API error during cart update:', apiError);
-        // Even if API fails, we'll keep the optimistic update for better UX
-        setError('Could not save changes to server, but your cart has been updated locally');
-        return { success: true, warning: 'Changes not saved to server' };
+        // Revert the optimistic update and refresh
+        fetchCart();
+        setError('Could not save changes to server. Please try again.');
+        return { success: false, error: 'Server error. Please try again.' };
       }
     } catch (err) {
       console.error('Error updating cart:', err);

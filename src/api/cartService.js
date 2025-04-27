@@ -97,35 +97,10 @@ export const updateCartItem = async (productId, quantity) => {
     // Log what we're sending
     console.log('Updating cart with payload:', payload);
     
-    // Try to determine which endpoint is available
-    // First try the standard update endpoint with POST
-    try {
-      const response = await axios.post('/api/cart/update', payload);
-      console.log('Cart update response:', response.data);
-      return response.data;
-    } catch (endpointError) {
-      console.log('First update attempt failed, trying alternative endpoint...');
-      
-      // If the update endpoint fails, try using the add endpoint with the new quantity
-      // Many implementations allow re-adding an item to update its quantity
-      try {
-        const response = await axios.post('/api/cart/add', payload);
-        console.log('Cart update via add endpoint response:', response.data);
-        return response.data;
-      } catch (addError) {
-        console.log('Second update attempt failed, trying one more endpoint...');
-        
-        // As a last resort, try the update-item endpoint
-        try {
-          const response = await axios.post('/api/cart/update-item', payload);
-          console.log('Cart update via update-item endpoint response:', response.data);
-          return response.data;
-        } catch (finalError) {
-          // If all attempts fail, throw the original error
-          throw endpointError;
-        }
-      }
-    }
+    // Use the add endpoint - it already handles both add and update cases
+    const response = await axios.post('/api/cart/add', payload);
+    console.log('Cart update response:', response.data);
+    return response.data;
   } catch (error) {
     console.error('Error updating cart item:', error);
     
@@ -163,34 +138,10 @@ export const removeCartItem = async (productId) => {
     
     console.log('Removing cart item with payload:', payload);
     
-    // Try to determine which endpoint is available
-    // First try the standard remove endpoint
-    try {
-      const response = await axios.post('/api/cart/remove', payload);
-      console.log('Remove cart item response:', response.data);
-      return response.data;
-    } catch (endpointError) {
-      console.log('First remove attempt failed, trying alternative endpoint...');
-      
-      // Try another possible endpoint
-      try {
-        const response = await axios.post('/api/cart/delete', payload);
-        console.log('Remove via delete endpoint response:', response.data);
-        return response.data;
-      } catch (deleteError) {
-        console.log('Second remove attempt failed, trying one more endpoint...');
-        
-        // As a last resort, try with DELETE method
-        try {
-          const response = await axios.delete('/api/cart/item', { data: payload });
-          console.log('Remove via DELETE method response:', response.data);
-          return response.data;
-        } catch (finalError) {
-          // If all attempts fail, throw the original error
-          throw endpointError;
-        }
-      }
-    }
+    // Use the remove endpoint
+    const response = await axios.post('/api/cart/remove', payload);
+    console.log('Remove cart item response:', response.data);
+    return response.data;
   } catch (error) {
     console.error('Error removing cart item:', error);
     if (error.response) {
@@ -205,6 +156,95 @@ export const removeCartItem = async (productId) => {
       data: {
         items: [] // Return empty items as fallback
       }
+    };
+  }
+};
+
+// We'll implement cart merging manually since there's no endpoint
+export const mergeGuestCart = async (guestCartId) => {
+  try {
+    if (!guestCartId) {
+      throw new Error('Guest cart ID is required');
+    }
+    
+    // Check if user is authenticated
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('User must be authenticated to merge carts');
+    }
+    
+    console.log('Manually merging guest cart:', guestCartId);
+    
+    // Get the guest cart contents
+    const response = await axios.get(`/api/cart?cartId=${guestCartId}`);
+    
+    if (!response.data || response.data.status !== 'success' || !response.data.data || !response.data.data.items) {
+      throw new Error('Failed to fetch guest cart for merging');
+    }
+    
+    const guestCartItems = response.data.data.items;
+    let mergeResults = { success: [], errors: [] };
+    
+    // Add each item from the guest cart to the user's cart
+    for (const item of guestCartItems) {
+      try {
+        await addToCartAuthenticated(item.product._id, item.quantity);
+        mergeResults.success.push(item.product._id);
+      } catch (error) {
+        // Capture the error message
+        const errorMessage = error.response?.data?.message || `Failed to add ${item.product.name || 'item'}`;
+        mergeResults.errors.push({
+          productId: item.product._id,
+          productName: item.product.name,
+          quantity: item.quantity,
+          message: errorMessage
+        });
+        console.warn(`Could not add item ${item.product._id} during merge: ${errorMessage}`);
+      }
+    }
+    
+    // Remove the guest cart ID from localStorage even if we had partial failures
+    localStorage.removeItem('guestCartId');
+    
+    // If we had any successful merges, consider it a success but with warnings
+    if (mergeResults.success.length > 0) {
+      // Create a list of warnings for items that couldn't be added
+      const warnings = mergeResults.errors.map(err => ({
+        productId: err.productId,
+        productName: err.productName || 'Product',
+        message: err.message.includes('stock limit') ? 
+          `${err.productName || 'Product'} exceeded stock limit` : 
+          err.message
+      }));
+      
+      return {
+        status: 'success',
+        message: `${mergeResults.success.length} items merged, ${mergeResults.errors.length} failed`,
+        warnings: warnings.length > 0 ? warnings : undefined
+      };
+    }
+    
+    // If all items failed, return error
+    if (mergeResults.errors.length > 0) {
+      return {
+        status: 'error',
+        message: 'Failed to merge any items from guest cart',
+        warnings: mergeResults.errors
+      };
+    }
+    
+    // If no items to merge
+    return {
+      status: 'success',
+      message: 'No items to merge from guest cart'
+    };
+  } catch (error) {
+    console.error('Error merging guest cart:', error);
+    // Remove guest cart ID even on errors to prevent repeated failures
+    localStorage.removeItem('guestCartId');
+    return {
+      status: 'error',
+      message: error.message || 'Failed to merge guest cart'
     };
   }
 }; 

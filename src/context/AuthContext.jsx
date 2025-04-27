@@ -39,6 +39,9 @@ export const AuthProvider = ({ children }) => {
       }
       setToken(newToken);
       setIsAuthenticated(true);
+      
+      // Note: The cart merging will be handled by CartContext useEffect
+      // which triggers when isAuthenticated changes
     } catch (error) {
       console.error('Error during login:', error);
     }
@@ -51,6 +54,8 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
       setUser(null);
       setToken(null);
+      
+      // Don't remove guestCartId on logout, the user might want to keep their cart
     } catch (error) {
       console.error('Error during logout:', error);
     }

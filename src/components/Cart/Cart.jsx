@@ -38,8 +38,38 @@ function Cart() {
     }
   }, [cartItems]);
   
-  const handleQuantityChange = async (item, newQuantity, index) => {
+  const handleQuantityChange = async (item, action, index) => {
+    // Calculate the new quantity based on action
+    const newQuantity = action === 'increment' ? item.quantity + 1 : item.quantity - 1;
+    
+    // Don't allow quantities below 1
     if (newQuantity < 1) return;
+    
+    // Check if we're exceeding stock
+    const stockLimit = item.product.quantityInStock || item.product.quantity_in_stocks || 0;
+    if (newQuantity > stockLimit) {
+      // Display temporary error message for this item
+      const updatedItems = [...localItems];
+      updatedItems[index] = {
+        ...updatedItems[index],
+        errorMessage: `Only ${stockLimit} available in stock`,
+        showError: true
+      };
+      setLocalItems(updatedItems);
+      
+      // Clear error after 3 seconds
+      setTimeout(() => {
+        const clearedItems = [...localItems];
+        if (clearedItems[index]) {
+          clearedItems[index] = {
+            ...clearedItems[index],
+            showError: false
+          };
+          setLocalItems(clearedItems);
+        }
+      }, 3000);
+      return;
+    }
     
     // Update local state first for better UX
     const updatedItems = [...localItems];
@@ -49,7 +79,31 @@ function Cart() {
     setIsUpdating(true);
     
     try {
-      await updateItemQuantity(item.product._id, newQuantity);
+      const result = await updateItemQuantity(item.product._id, newQuantity);
+      
+      if (!result.success && result.error) {
+        // Show error message if update failed
+        const updatedItemsWithError = [...localItems];
+        updatedItemsWithError[index] = {
+          ...updatedItemsWithError[index],
+          errorMessage: result.error,
+          showError: true,
+          isLoading: false
+        };
+        setLocalItems(updatedItemsWithError);
+        
+        // Clear error after 3 seconds
+        setTimeout(() => {
+          const clearedItems = [...localItems];
+          if (clearedItems[index]) {
+            clearedItems[index] = {
+              ...clearedItems[index],
+              showError: false
+            };
+            setLocalItems(clearedItems);
+          }
+        }, 3000);
+      }
     } catch (error) {
       console.error('Failed to update quantity', error);
     } finally {
@@ -153,7 +207,7 @@ function Cart() {
               </div>
               <div className="cart-item-quantity">
                 <button 
-                  onClick={() => handleQuantityChange(item, item.quantity - 1, index)}
+                  onClick={() => handleQuantityChange(item, 'decrement', index)}
                   disabled={item.isLoading || isUpdating || item.quantity <= 1}
                   className="quantity-button"
                 >
@@ -161,12 +215,15 @@ function Cart() {
                 </button>
                 <span className="quantity">{item.quantity}</span>
                 <button 
-                  onClick={() => handleQuantityChange(item, item.quantity + 1, index)}
-                  disabled={item.isLoading || isUpdating}
+                  onClick={() => handleQuantityChange(item, 'increment', index)}
+                  disabled={item.isLoading || isUpdating || (item.product.quantityInStock && item.quantity >= item.product.quantityInStock)}
                   className="quantity-button"
                 >
                   <FontAwesomeIcon icon={faPlus} />
                 </button>
+                {item.showError && (
+                  <div className="quantity-error">{item.errorMessage}</div>
+                )}
               </div>
               <div className="cart-item-total">
                 ${item.product.price ? (item.product.price * item.quantity).toFixed(2) : '0.00'}
