@@ -1,16 +1,17 @@
-import { useState } from 'react'
-import './App.css'
+import React from "react";
+import { AuthProvider } from './context/AuthContext';
+import ProductPage from "./components/productsPage/ProductsPage";
+import WelcomeScreen from "./components/welcomeScreen/WelcomeScreen";
 
 function App() {
   return (
-    <div className="name-container">
-      <h1>Duru</h1>
-      <h1>Serhat</h1>
-      <h1>Ömer</h1>
-      <h1>Arda</h1>
-      <h1>Deren</h1>
-    </div>
-  )
+    <AuthProvider>
+      <div className="app-container">
+        <WelcomeScreen />
+        <ProductPage />
+      </div>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;

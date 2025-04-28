@@ -1,0 +1,304 @@
+/* ProductsPage.css */
+.product-page-container {
+  display: flex;
+  width: 100%;
+  max-width: var(--container-width);
+  margin: 0 auto;
+  min-height: calc(100vh - 70px); /* Adjust based on navbar height */
+  padding: var(--spacing-md);
+}
+
+.main-content {
+  display: flex;
+  width: 100%;
+  gap: var(--spacing-lg);
+}
+
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  margin-right: var(--spacing-md);
+}
+
+.sidebar-filters {
+  background-color: var(--color-bg);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  border: none;
+}
+
+.sidebar-filters h2 {
+  margin-top: 0;
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 2px solid var(--color-primary);
+  font-family: var(--font-heading);
+  font-weight: var(--font-weight-bold);
+}
+
+.content-area {
+  flex-grow: 1;
+  padding: var(--spacing-md);
+  overflow-y: auto;
+}
+
+.content-area h1 {
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-primary);
+  font-family: var(--font-heading);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Search and Controls */
+.product-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.search-container {
+  position: relative;
+  flex-grow: 1;
+  max-width: 500px;
+  display: flex;
+  margin: 0;
+}
+
+.search-input {
+  flex: 1;
+  padding: var(--spacing-xs);
+  border: var(--border-size) solid var(--color-bg-dark);
+  border-radius: var(--radius-input) 0 0 var(--radius-input);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  transition: box-shadow 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+.search-button {
+  background-color: var(--color-primary);
+  color: var(--color-primary-text);
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 0 var(--radius-input) var(--radius-input) 0;
+  cursor: pointer;
+  font-weight: var(--button-font-weight);
+  font-family: inherit;
+  transition: background-color 0.3s ease;
+}
+
+.search-button:hover {
+  background-color: var(--color-secondary);
+}
+
+.grid-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.grid-controls button {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--color-primary);
+  color: var(--color-primary-text);
+  border: none;
+  border-radius: var(--radius-button);
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-family: inherit;
+  font-weight: var(--button-font-weight);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grid-controls button:hover {
+  background-color: var(--color-secondary);
+}
+
+.button-text {
+  display: inline-block;
+  margin-left: 5px;
+}
+
+.sort-button {
+  min-width: 160px;
+  justify-content: center;
+}
+
+/* Filter Panel */
+.filter-group {
+  margin-bottom: var(--spacing-md);
+  position: relative;
+}
+
+.filter-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-select,
+.price-input {
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--color-bg-dark);
+  border-radius: var(--radius-input);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  transition: border-color 0.2s;
+}
+
+.filter-select:focus,
+.price-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.price-inputs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.price-inputs span {
+  color: var(--color-text-secondary);
+}
+
+.reset-filters-button {
+  padding: var(--spacing-sm);
+  background: none;
+  border: 1px solid var(--color-bg-dark);
+  border-radius: var(--radius-button);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: var(--font-weight-medium);
+  width: 100%;
+  margin-top: var(--spacing-lg);
+  transition: background-color 0.2s;
+}
+
+.reset-filters-button:hover {
+  background-color: var(--color-bg-dark);
+}
+
+/* Results */
+.results-count {
+  margin: var(--spacing-sm) 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.product-grid {
+  display: grid;
+  gap: var(--spacing-md);
+  grid-template-columns: repeat(3, 1fr);
+  justify-items: center;
+}
+
+.no-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--spacing-xl) 0;
+}
+
+.no-results p {
+  margin-bottom: var(--spacing-md);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+}
+
+.clear-filters-button {
+  padding: var(--spacing-xs) var(--spacing-md);
+  background-color: var(--color-primary);
+  color: var(--color-primary-text);
+  border: none;
+  border-radius: var(--radius-button);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: var(--button-font-weight);
+}
+
+/* Pulse Effect for Search Button */
+.pulse-effect {
+  position: relative;
+}
+
+.pulse-effect:hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 0 var(--radius-input) var(--radius-input) 0;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--color-primary-rgb), 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(var(--color-primary-rgb), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--color-primary-rgb), 0);
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    margin-bottom: var(--spacing-md);
+    margin-right: 0;
+  }
+  
+  .sidebar-filters {
+    padding: var(--spacing-md);
+  }
+  
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .search-container {
+    max-width: 100%;
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .product-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .grid-controls {
+    justify-content: space-between;
+  }
+  
+  .button-text {
+    font-size: var(--font-size-sm);
+  }
+}

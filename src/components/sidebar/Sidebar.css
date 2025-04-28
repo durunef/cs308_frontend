@@ -1,0 +1,17 @@
+.sidebar {
+  width: 250px; 
+  background-color: oklch(41% 0.112 45.904); 
+  color: var(--color-primary-text); 
+  padding: var(--spacing-sm);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+h1{
+    font-family: var(--font-heading);
+}
+
+h2{
+    font-family: var(--font-heading);
+}
