@@ -61,7 +61,7 @@ function ProductsPage() {
             products.map(async (product) => {
               try {
                 // Try to fetch reviews for this product
-                const reviewsResponse = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:3000/api'}/products/${product._id}/reviews`);
+                const reviewsResponse = await axios.get(`http://localhost:3000/api/products/${product._id}/reviews`);
                 
                 if (reviewsResponse.data && reviewsResponse.data.status === 'success') {
                   let reviews = [];

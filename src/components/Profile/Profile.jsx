@@ -23,6 +23,7 @@ import "./profile.css";
 import { useAuth } from "../../context/AuthContext";
 import { getOrderHistory } from "../../api/orderService";
 import OrderHistory from "../OrderHistory/OrderHistory";
+import axios from "../../api/axios";
 
 function Profile() {
   const location = useLocation();
@@ -53,21 +54,20 @@ function Profile() {
         return;
       }
       try {
-        const res = await fetch("http://localhost:3000/api/user/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        const { data, status } = await res.json();
-        if (status === "success" && data.user) {
+        const response = await axios.get("/api/user/profile");
+        
+        if (response.data && response.data.status === "success" && response.data.data.user) {
+          const userData = response.data.data.user;
+          
+          // Safely access address properties with fallbacks
           setAddress({
-            street: data.user.address.street || "",
-            city: data.user.address.city || "",
-            postalCode: data.user.address.postalCode || ""
+            street: userData.address?.street || "",
+            city: userData.address?.city || "",
+            postalCode: userData.address?.postalCode || ""
           });
         }
       } catch (err) {
-        console.error(err);
+        console.error("Failed to load profile:", err);
         setMessage("Failed to load profile information.");
         setMessageType("error");
       } finally {
@@ -94,17 +94,19 @@ function Profile() {
       setMessageType("error");
       return;
     }
+    
+    setMessage("Updating address...");
+    setMessageType("info");
+    
     try {
-      const res = await fetch("http://localhost:3000/api/user/address", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(address)
+      // Use the exact format that the backend expects
+      const response = await axios.put("/api/user/address", {
+        street: address.street,
+        city: address.city,
+        postalCode: address.postalCode
       });
-      const { status } = await res.json();
-      if (status === "success") {
+      
+      if (response.data && response.data.status === "success") {
         setMessage("Address updated successfully.");
         setMessageType("success");
         setIsEditing(false);
@@ -112,8 +114,8 @@ function Profile() {
         throw new Error("Failed to update address");
       }
     } catch (err) {
-      console.error(err);
-      setMessage("Failed to update address.");
+      console.error("Error updating address:", err);
+      setMessage("Failed to update address. Please try again.");
       setMessageType("error");
     }
   };

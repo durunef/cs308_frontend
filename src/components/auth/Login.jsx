@@ -29,7 +29,7 @@ function Login() {
   // 2) Eğer redirect varsa, mount olduğunda bilgi mesajı göster
   useEffect(() => {
     if (redirectTo && redirectTo !== "/") {
-      setInfo("Devam etmek için lütfen giriş yapın");
+      setInfo("Please login to continue");
     }
   }, [redirectTo]);
 

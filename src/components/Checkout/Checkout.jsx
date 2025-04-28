@@ -10,7 +10,7 @@ import './Checkout.css';
 export default function Checkout() {
   const navigate = useNavigate();
   const { cartItems, getCartTotalPrice, clearCart } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, token } = useAuth();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     fullName:'', email:'', street:'', city:'', postalCode:'',
@@ -27,19 +27,25 @@ export default function Checkout() {
       navigate('/login?redirect=checkout');
       return;
     }
+    
     axios.get('/api/user/profile')
       .then(res => {
-        const u = res.data.data.user;
-        setForm(f => ({
-          ...f,
-          fullName: u.name,
-          email: u.email,
-          street: u.address.street,
-          city: u.address.city,
-          postalCode: u.address.postalCode
-        }));
+        if (res.data && res.data.data && res.data.data.user) {
+          const u = res.data.data.user;
+          setForm(f => ({
+            ...f,
+            fullName: u.name || '',
+            email: u.email || '',
+            street: u.address?.street || '',
+            city: u.address?.city || '',
+            postalCode: u.address?.postalCode || ''
+          }));
+        }
       })
-      .catch(() => {});
+      .catch(err => {
+        console.error('Error fetching user profile:', err);
+        setError('Failed to load user profile information.');
+      });
   }, [isAuthenticated, navigate]);
 
   // Handle input change
