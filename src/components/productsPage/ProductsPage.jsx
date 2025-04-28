@@ -12,6 +12,7 @@ import {
 import { getAllProducts } from "../../api/productService";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./ProductsPage.css"; 
+import axios from "axios";
 
 function ProductsPage() {
   const location = useLocation();
@@ -54,8 +55,52 @@ function ProductsPage() {
         if (response.status === 'success') {
           const products = response.data.products;
           console.log('Received products:', products); // Debug log
-          setAllProducts(products);
-          setFilteredProducts(products);
+          
+          // Fetch review counts for each product
+          const productsWithReviewData = await Promise.all(
+            products.map(async (product) => {
+              try {
+                // Try to fetch reviews for this product
+                const reviewsResponse = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:3000/api'}/products/${product._id}/reviews`);
+                
+                if (reviewsResponse.data && reviewsResponse.data.status === 'success') {
+                  let reviews = [];
+                  
+                  // Extract reviews based on the response structure
+                  if (reviewsResponse.data.data && reviewsResponse.data.data.reviews) {
+                    reviews = reviewsResponse.data.data.reviews;
+                  } else if (Array.isArray(reviewsResponse.data.data)) {
+                    reviews = reviewsResponse.data.data;
+                  }
+                  
+                  // Filter only approved reviews
+                  const approvedReviews = reviews.filter(review => review.approved === true);
+                  
+                  // Calculate average rating
+                  let averageRating = 0;
+                  if (approvedReviews.length > 0) {
+                    const sum = approvedReviews.reduce((total, review) => total + review.rating, 0);
+                    averageRating = sum / approvedReviews.length;
+                  }
+                  
+                  return { 
+                    ...product, 
+                    reviews: approvedReviews,
+                    averageRating,
+                    reviewCount: approvedReviews.length
+                  };
+                }
+              } catch (error) {
+                console.warn(`Couldn't fetch reviews for product ${product._id}:`, error);
+              }
+              
+              // Return product as is if we couldn't fetch reviews
+              return product;
+            })
+          );
+          
+          setAllProducts(productsWithReviewData);
+          setFilteredProducts(productsWithReviewData);
         } else {
           throw new Error('Failed to fetch products');
         }
@@ -108,11 +153,43 @@ function ProductsPage() {
       result.sort((a, b) => b.price - a.price);
     }
     
-    // Apply rating sorting
+    // Apply rating/popularity sorting
     if (ratingSort === "desc") {
-      result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      result.sort((a, b) => {
+        // Try to sort by averageRating first
+        if (a.averageRating !== undefined && b.averageRating !== undefined) {
+          return b.averageRating - a.averageRating;
+        }
+        
+        // Then try to sort by rating property
+        if (a.rating !== undefined && b.rating !== undefined) {
+          return b.rating - a.rating;
+        }
+        
+        // Then try to sort by reviews count/length if available
+        const aReviews = a.reviews ? a.reviews.length : 0;
+        const bReviews = b.reviews ? b.reviews.length : 0;
+        
+        return bReviews - aReviews;
+      });
     } else if (ratingSort === "asc") {
-      result.sort((a, b) => (a.rating || 0) - (b.rating || 0));
+      result.sort((a, b) => {
+        // Try to sort by averageRating first
+        if (a.averageRating !== undefined && b.averageRating !== undefined) {
+          return a.averageRating - b.averageRating;
+        }
+        
+        // Then try to sort by rating property
+        if (a.rating !== undefined && b.rating !== undefined) {
+          return a.rating - b.rating;
+        }
+        
+        // Then try to sort by reviews count/length if available
+        const aReviews = a.reviews ? a.reviews.length : 0;
+        const bReviews = b.reviews ? b.reviews.length : 0;
+        
+        return aReviews - bReviews;
+      });
     }
     
     setFilteredProducts(result);

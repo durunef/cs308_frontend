@@ -22,12 +22,13 @@ import "./ProductInfo.css";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
+import { submitProductReview } from "../../api/orderService";
 
 function ProductInfo() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, token } = useAuth();
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +40,9 @@ function ProductInfo() {
   const [hasUserBought, setHasUserBought] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [usernames, setUsernames] = useState({});
   
   // Fetch product data
   useEffect(() => {
@@ -102,10 +105,12 @@ function ProductInfo() {
         
         // Adapt to the actual response structure
         if (response.data && typeof response.data === 'object' && !response.data.includes) {
-          // Either extract from response.data.data, response.data.reviews, or use response.data directly if it's an array
+          // Extract reviews from the response structure as shown in the example
           let reviewsData = [];
           
-          if (Array.isArray(response.data)) {
+          if (response.data.status === "success" && response.data.data && response.data.data.reviews) {
+            reviewsData = response.data.data.reviews;
+          } else if (Array.isArray(response.data)) {
             reviewsData = response.data;
           } else if (response.data.data && Array.isArray(response.data.data)) {
             reviewsData = response.data.data;
@@ -113,8 +118,20 @@ function ProductInfo() {
             reviewsData = response.data.reviews;
           }
           
+          // Only show approved reviews
+          reviewsData = reviewsData.filter(review => review.approved === true);
+          
           console.log('Extracted reviews data:', reviewsData);
           setReviews(reviewsData);
+          
+          // Fetch usernames for each unique user ID
+          const userIds = [...new Set(reviewsData
+            .map(review => typeof review.user === 'string' ? review.user : review.user?._id)
+            .filter(Boolean))];
+            
+          if (userIds.length > 0) {
+            fetchUsernames(userIds);
+          }
         } else {
           console.warn('Received HTML instead of JSON for reviews.');
           setReviews([]);
@@ -128,7 +145,40 @@ function ProductInfo() {
     if (productId) {
       fetchReviews();
     }
-  }, [productId]);
+  }, [productId, reviewSubmitted]);
+  
+  // Fetch usernames for user IDs
+  const fetchUsernames = async (userIds) => {
+    if (!userIds.length) return;
+    
+    const usernameMap = {};
+    
+    try {
+      // Process each user ID one by one
+      for (const userId of userIds) {
+        try {
+          console.log(`Fetching username for user ID: ${userId}`);
+          // Call the public user endpoint without auth header
+          const response = await axios.get(`${API_URL}/user/${userId}`);
+          
+          if (response.data && response.data.status === 'success') {
+            usernameMap[userId] = response.data.data.name || 'User';
+            console.log(`Found username for ${userId}: ${usernameMap[userId]}`);
+          } else {
+            usernameMap[userId] = 'User';
+          }
+        } catch (err) {
+          console.error(`Error fetching username for user ${userId}:`, err);
+          usernameMap[userId] = 'User';
+        }
+      }
+      
+      console.log('All usernames fetched:', usernameMap);
+      setUsernames(usernameMap);
+    } catch (err) {
+      console.error("Error in username fetching process:", err);
+    }
+  };
   
   // Check if user has bought this product
   useEffect(() => {
@@ -199,26 +249,28 @@ function ProductInfo() {
     
     setReviewSubmitting(true);
     try {
-      const response = await axios.post(
-        `${API_URL}/products/${productId}/reviews`,
-        {
-          rating: userReview.rating,
-          comment: userReview.comment
-        },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        }
-      );
+      const response = await submitProductReview(productId, userReview.rating, userReview.comment);
       
-      if (response.data.status === "success") {
-        // Add the new review to the list
-        setReviews([...reviews, response.data.data]);
+      if (response.status === "success") {
+        // Show success message
+        toast.success("Your review has been submitted successfully!");
+        
+        // If the review is directly approved, add it to the list
+        if (response.data && response.data.approved) {
+          setReviews([...reviews, response.data]);
+        } else {
+          // Otherwise inform user it's pending approval
+          toast.info("Your review will be visible after approval.");
+        }
+        
         // Reset the review form
         setUserReview({ rating: 0, comment: "" });
+        // Trigger review refresh
+        setReviewSubmitted(prev => !prev);
       }
     } catch (err) {
       console.error("Error submitting review:", err);
-      // Show error notification
+      toast.error("Failed to submit review. Please try again.");
     } finally {
       setReviewSubmitting(false);
     }
@@ -249,6 +301,13 @@ function ProductInfo() {
     }
     
     return stars;
+  };
+  
+  // Helper function to generate a random commenter name with just asterisks
+  const generateRandomCommenterName = () => {
+    // Generate a random number of asterisks between 5 and 12
+    const numAsterisks = Math.floor(Math.random() * 8) + 5;
+    return '*'.repeat(numAsterisks);
   };
   
   if (loading) {
@@ -558,7 +617,9 @@ function ProductInfo() {
               <div key={review._id} className="review-item">
                 <div className="review-header">
                   <div className="reviewer-info">
-                    <span className="reviewer-name">{review.user?.name || "Anonymous"}</span>
+                    <span className="reviewer-name">
+                      {generateRandomCommenterName()}
+                    </span>
                     {review.verified_purchase && (
                       <span className="verified-badge">
                         <FontAwesomeIcon icon={faCheck} /> Verified Purchase

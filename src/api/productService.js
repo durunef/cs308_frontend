@@ -25,8 +25,34 @@ export const getProductById = async (productId) => {
 // Create a new product
 export const createProduct = async (productData) => {
   try {
-    const response = await axios.post('/api/products', productData);
-    return response.data;
+    // Check if productData contains a file (image)
+    if (productData.image && productData.image instanceof File) {
+      // Create FormData and append all product data
+      const formData = new FormData();
+      
+      // Append all product properties
+      Object.keys(productData).forEach(key => {
+        // Skip appending the image directly, it will be handled separately
+        if (key !== 'image') {
+          formData.append(key, productData[key]);
+        }
+      });
+      
+      // Append image file with the field name 'image'
+      formData.append('image', productData.image);
+      
+      // Send as multipart/form-data
+      const response = await axios.post('/api/products', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return response.data;
+    } else {
+      // Regular JSON request if no image
+      const response = await axios.post('/api/products', productData);
+      return response.data;
+    }
   } catch (error) {
     console.error('Error creating product:', error);
     throw error;

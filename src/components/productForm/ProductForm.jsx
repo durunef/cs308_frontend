@@ -24,6 +24,7 @@ function ProductForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [imagePreview, setImagePreview] = useState(null);
   
   // Load categories for dropdown selection
   useEffect(() => {
@@ -55,6 +56,21 @@ function ProductForm() {
       [name]: processedValue
     }));
   };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Update form data with the file
+      setFormData(prev => ({
+        ...prev,
+        image: file
+      }));
+      
+      // Create preview URL for the image
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+    }
+  };
   
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -81,6 +97,8 @@ function ProductForm() {
           distributorInfo: '',
           category: ''
         });
+        // Clear image preview
+        setImagePreview(null);
       } else {
         throw new Error('Failed to create product');
       }
@@ -146,6 +164,22 @@ function ProductForm() {
             onChange={handleChange}
             rows="4"
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="productImage">Product Image</label>
+          <input
+            type="file"
+            id="productImage"
+            name="productImage"
+            accept="image/*"
+            onChange={handleImageChange}
+          />
+          {imagePreview && (
+            <div className="image-preview">
+              <img src={imagePreview} alt="Product preview" />
+            </div>
+          )}
         </div>
         
         <div className="form-row">

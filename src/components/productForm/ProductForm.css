@@ -117,12 +117,35 @@
   cursor: not-allowed;
 }
 
+/* Image upload and preview styles */
+.image-preview {
+  margin-top: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  max-width: 300px;
+}
+
+.image-preview img {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+input[type="file"] {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+}
+
+/* Focus styling for file input */
+input[type="file"]:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
 @media (max-width: 768px) {
-  .product-form-container {
-    padding: 1.5rem;
-    margin: 1.5rem;
-  }
-  
   .form-row {
     flex-direction: column;
     gap: 1.5rem;

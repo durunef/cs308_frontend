@@ -111,10 +111,32 @@ export const submitProductRating = async (productId, rating) => {
 };
 
 /**
- * Bir ürüne yorum gönderir.
+ * Bir ürüne yorum ve derecelendirme gönderir.
+ * API, review oluşturup bir reviewId döndürür ve bu ID ile daha sonra onay yapılabilir.
+ */
+export const submitProductReview = async (productId, rating, comment) => {
+  // The API endpoint expects /api/products/:productId/reviews
+  const response = await axios.post(`/api/products/${productId}/reviews`, { 
+    rating, 
+    comment 
+  });
+  
+  console.log('Review submission response:', response.data);
+  return response.data;
+};
+
+/**
+ * Bir ürüne sadece yorum gönderir (rating olmadan).
+ * API, review oluşturup bir reviewId döndürür ve bu ID ile daha sonra onay yapılabilir.
  */
 export const submitProductComment = async (productId, comment) => {
-  const response = await axios.post(`/api/products/${productId}/comment`, { comment });
+  // Similar to review but without rating
+  const response = await axios.post(`/api/products/${productId}/reviews`, { 
+    comment,
+    rating: 0 // Send a rating of 0 to indicate this is just a comment
+  });
+  
+  console.log('Comment submission response:', response.data);
   return response.data;
 };
 

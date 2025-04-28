@@ -98,9 +98,38 @@
 }
 
 .welcome-message {
-  font-size: var(--font-size-lg);
-  color: var(--color-text-primary);
-  margin-right: var(--spacing-md);
+  font-size: 1.2rem;
+  font-weight: normal;
+  color: var(--color-primary);
+  letter-spacing: 0.02em;
+}
+
+.username {
+  font-weight: 700;
+  color: var(--color-secondary);
+}
+
+.user-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 0.5rem 1rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--color-primary);
+  transition: all 0.3s ease;
+}
+
+.user-welcome:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+}
+
+.user-icon {
+  font-size: 1rem;
+  color: var(--color-primary);
+  margin-right: 0.5rem;
 }
 
 @media (max-width: 768px) {
@@ -130,7 +159,12 @@
   }
 
   .welcome-message {
+    font-size: 1rem;
     margin-right: 0;
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: 0;
+  }
+  
+  .user-welcome {
+    padding: 0.4rem 0.8rem;
   }
 }

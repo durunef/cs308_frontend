@@ -8,7 +8,8 @@ import {
   faHome,
   faBars,
   faTimes,
-  faHeart
+  faHeart,
+  faCheckSquare,
 } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";

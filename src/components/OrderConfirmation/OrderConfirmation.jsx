@@ -19,6 +19,7 @@ import {
 import { getOrderDetails, downloadInvoice, getOrderStatus, emailInvoice } from '../../api/orderService';
 import './OrderConfirmation.css';
 import axios from 'axios';
+import ProductReview from '../ProductReview/ProductReview';
 
 function OrderConfirmation() {
   const { orderId } = useParams();
@@ -719,19 +720,30 @@ function OrderConfirmation() {
         <h2>Order Items</h2>
         <div className="order-items-container">
           {order.items && order.items.map((item, index) => (
-            <div key={index} className="order-item">
-              <img 
-                src={item.product.image} 
-                alt={item.product.name} 
-                className="order-item-image" 
-                onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/100x100?text=Product';
-                }}
-              />
-              <div className="order-item-details">
-                <h3 className="order-item-name">{item.product.name}</h3>
-                <p className="order-item-price">${(item.priceAtPurchase || item.product.price).toFixed(2)} x {item.quantity}</p>
-                <p className="order-item-total">Total: ${((item.priceAtPurchase || item.product.price) * item.quantity).toFixed(2)}</p>
+            <div key={index} className="order-item-with-review">
+              <div className="order-item">
+                <img 
+                  src={item.product.image} 
+                  alt={item.product.name} 
+                  className="order-item-image" 
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/100x100?text=Product';
+                  }}
+                />
+                <div className="order-item-details">
+                  <h3 className="order-item-name">{item.product.name}</h3>
+                  <p className="order-item-price">${(item.priceAtPurchase || item.product.price).toFixed(2)} x {item.quantity}</p>
+                  <p className="order-item-total">Total: ${((item.priceAtPurchase || item.product.price) * item.quantity).toFixed(2)}</p>
+                  
+                  {/* Add ProductReview component */}
+                  <ProductReview 
+                    product={item.product} 
+                    orderStatus={orderStatus}
+                    onReviewSubmitted={(productId, rating, comment) => {
+                      console.log(`Review submitted for ${productId}: ${rating} stars, "${comment}"`);
+                    }}
+                  />
+                </div>
               </div>
             </div>
           ))}
