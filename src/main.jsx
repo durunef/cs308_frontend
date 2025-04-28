@@ -19,6 +19,7 @@ import Checkout from "./components/Checkout/Checkout";
 import OrderConfirmation from "./components/OrderConfirmation/OrderConfirmation";
 import OrderHistory from "./components/OrderHistory/OrderHistory";
 import RateProducts from "./components/RateProducts/RateProducts";
+import ReviewApproval from "./components/ReviewApproval/ReviewApproval";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 createRoot(document.getElementById("root")).render(
@@ -57,6 +58,11 @@ createRoot(document.getElementById("root")).render(
             <Route path="/rate-products/:orderId" element={
               <ProtectedRoute>
                 <RateProducts />
+              </ProtectedRoute>
+            } />
+            <Route path="/review-approval" element={
+              <ProtectedRoute>
+                <ReviewApproval />
               </ProtectedRoute>
             } />
             <Route path="/category/:categoryId" element={<CategoryPage />} />

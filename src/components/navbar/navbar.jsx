@@ -76,6 +76,9 @@ function Navbar() {
               <Link to="/add-product" className="nav-link hover-effect">
                 Add Product
               </Link>
+              <Link to="/review-approval" className="nav-link hover-effect">
+                Review Approve
+              </Link>
               <button onClick={handleLogout} className="nav-link hover-effect">
                 <FontAwesomeIcon icon={faSignOutAlt} className="icon-margin-right" />
                 Logout
@@ -121,6 +124,9 @@ function Navbar() {
                 </Link>
                 <Link to="/add-product" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                   Add Product
+                </Link>
+                <Link to="/review-approval" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                  Review Approve
                 </Link>
                 <button
                   className="mobile-nav-link mobile-logout"
