@@ -21,6 +21,7 @@ import OrderConfirmation from "./components/OrderConfirmation/OrderConfirmation"
 import OrderHistory from "./components/OrderHistory/OrderHistory";
 import RateProducts from "./components/RateProducts/RateProducts";
 import ReviewApproval from "./components/ReviewApproval/ReviewApproval";
+import Wishlist from "./components/Wishlist/Wishlist";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const root = createRoot(document.getElementById("root"));
@@ -47,6 +48,7 @@ root.render(
               <Route path="/rate-products" element={<ProtectedRoute><RateProducts /></ProtectedRoute>} />
               <Route path="/review-approval" element={<ProtectedRoute><ReviewApproval /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
             </Routes>
           </WishlistProvider>
         </CartProvider>

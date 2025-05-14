@@ -16,8 +16,7 @@ import {
   faInfoCircle
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
-import { API_URL } from "../../config";
-import axios from "axios";
+import axios from "../../api/axios";
 import "./ProductInfo.css";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
@@ -49,8 +48,8 @@ function ProductInfo() {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        console.log(`Fetching product with ID: ${productId} from ${API_URL}/products/${productId}`);
-        const response = await axios.get(`${API_URL}/products/${productId}`);
+        console.log(`Fetching product with ID: ${productId}`);
+        const response = await axios.get(`/api/products/${productId}`);
         console.log('Product API response:', response);
         
         // Check if we received valid JSON data
@@ -58,7 +57,7 @@ function ProductInfo() {
           // Extract product data based on the actual structure
           let productData;
           
-          if (response.data.data && response.data.data.product) {
+          if (response.data.status === 'success' && response.data.data && response.data.data.product) {
             productData = response.data.data.product;
           } else if (response.data.product) {
             productData = response.data.product;
@@ -100,7 +99,7 @@ function ProductInfo() {
     const fetchReviews = async () => {
       try {
         console.log(`Fetching reviews for product: ${productId}`);
-        const response = await axios.get(`${API_URL}/products/${productId}/reviews`);
+        const response = await axios.get(`/api/products/${productId}/reviews`);
         console.log('Reviews API response:', response);
         
         // Adapt to the actual response structure
@@ -159,7 +158,7 @@ function ProductInfo() {
         try {
           console.log(`Fetching username for user ID: ${userId}`);
           // Call the public user endpoint without auth header
-          const response = await axios.get(`${API_URL}/user/${userId}`);
+          const response = await axios.get(`/api/users/${userId}`);
           
           if (response.data && response.data.status === 'success') {
             usernameMap[userId] = response.data.data.name || 'User';
@@ -186,9 +185,7 @@ function ProductInfo() {
       if (!user) return;
       
       try {
-        const response = await axios.get(`${API_URL}/users/${user.id}/purchased-products`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        });
+        const response = await axios.get(`/api/users/${user.id}/purchased-products`);
         
         if (response.data.status === "success") {
           const hasBought = response.data.data.some(p => p.productId === productId);

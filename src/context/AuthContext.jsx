@@ -29,6 +29,9 @@ export const AuthProvider = ({ children }) => {
 
   const login = (newToken, rawUserData) => {
     try {
+      console.log('Login - New token:', newToken);
+      console.log('Login - Raw user data:', rawUserData);
+      
       localStorage.setItem('token', newToken);
 
       let u;
@@ -37,6 +40,7 @@ export const AuthProvider = ({ children }) => {
       else u = rawUserData;
 
       if (u) {
+        console.log('Login - Setting user data:', u);
         localStorage.setItem('user', JSON.stringify(u));
         setUser(u);
       }

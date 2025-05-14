@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -14,6 +14,73 @@ import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import './Wishlist.css';
 
+// Memoized WishlistItem component
+const WishlistItem = memo(({ item, onRemove, onToggleNotification, onAddToCart, onProductClick }) => {
+  // Check if we have the necessary product data
+  if (!item?.productId) {
+    console.warn('Invalid wishlist item:', item);
+    return null;
+  }
+
+  const product = item.productId; // The product data is nested in productId
+
+  return (
+    <div className="wishlist-item">
+      <div className="wishlist-item-image">
+        <img 
+          src={product.image || 'https://via.placeholder.com/150x150?text=No+Image'} 
+          alt={product.name || 'Product'} 
+          onClick={() => onProductClick(product._id)}
+          style={{ cursor: 'pointer' }}
+        />
+      </div>
+      
+      <div className="wishlist-item-details">
+        <h3 
+          onClick={() => onProductClick(product._id)}
+          style={{ cursor: 'pointer', color: 'var(--color-primary)' }}
+          className="product-name-link"
+        >
+          {product.name || 'Unnamed Product'}
+        </h3>
+        <p className="wishlist-item-price">
+          ${(product.price || 0).toFixed(2)}
+        </p>
+        <p className="wishlist-item-description">
+          {product.description || 'No description available'}
+        </p>
+      </div>
+      
+      <div className="wishlist-item-actions">
+        <button 
+          className="add-to-cart-button"
+          onClick={() => onAddToCart(product)}
+        >
+          <FontAwesomeIcon icon={faShoppingCart} />
+          Add to Cart
+        </button>
+        
+        <button 
+          className={`notification-button ${item.notifyOnDiscount ? 'active' : ''}`}
+          onClick={() => onToggleNotification(product._id, item.notifyOnDiscount)}
+          title={item.notifyOnDiscount ? 'Disable notifications' : 'Enable notifications'}
+        >
+          <FontAwesomeIcon icon={item.notifyOnDiscount ? faBell : faBellSlash} />
+          {item.notifyOnDiscount ? 'Notifications On' : 'Notifications Off'}
+        </button>
+        
+        <button 
+          className="remove-button"
+          onClick={() => onRemove(product._id)}
+        >
+          <FontAwesomeIcon icon={faTrash} />
+          Remove
+        </button>
+      </div>
+    </div>
+  );
+});
+
 function Wishlist() {
   const navigate = useNavigate();
   const { 
@@ -27,38 +94,57 @@ function Wishlist() {
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
 
-  useEffect(() => {
+  // Memoize the fetch callback
+  const fetchWishlistData = useCallback(() => {
     if (isAuthenticated) {
-      fetchWishlist();
+      fetchWishlist(true);
     }
   }, [isAuthenticated, fetchWishlist]);
 
-  const handleRemoveFromWishlist = async (productId) => {
+  // Fetch on mount and when authentication changes
+  useEffect(() => {
+    fetchWishlistData();
+  }, [fetchWishlistData, isAuthenticated]);
+
+  // Add a debug effect to monitor wishlist items
+  useEffect(() => {
+    console.log('Wishlist items updated:', wishlistItems);
+  }, [wishlistItems]);
+
+  const handleRemoveFromWishlist = useCallback(async (productId) => {
     const result = await removeFromWishlist(productId);
     if (result.success) {
       toast.success('Item removed from wishlist');
+      // Force a refresh of the wishlist
+      fetchWishlistData();
     } else {
       toast.error(result.error || 'Failed to remove item');
     }
-  };
+  }, [removeFromWishlist, fetchWishlistData]);
 
-  const handleToggleNotification = async (productId, currentNotifyStatus) => {
+  const handleToggleNotification = useCallback(async (productId, currentNotifyStatus) => {
     const result = await updateNotificationPreference(productId, !currentNotifyStatus);
     if (result.success) {
       toast.success(`Notifications ${!currentNotifyStatus ? 'enabled' : 'disabled'} for this item`);
+      // Force a refresh of the wishlist
+      fetchWishlistData();
     } else {
       toast.error(result.error || 'Failed to update notification preference');
     }
-  };
+  }, [updateNotificationPreference, fetchWishlistData]);
 
-  const handleAddToCart = async (product) => {
+  const handleAddToCart = useCallback(async (product) => {
     const result = await addToCart(product._id, 1);
     if (result.success) {
       toast.success('Added to cart');
     } else {
       toast.error(result.error || 'Failed to add to cart');
     }
-  };
+  }, [addToCart]);
+
+  const handleProductClick = useCallback((productId) => {
+    navigate(`/product/${productId}`);
+  }, [navigate]);
 
   if (!isAuthenticated) {
     return (
@@ -77,7 +163,7 @@ function Wishlist() {
     return (
       <div className="wishlist-container">
         <div className="wishlist-loading">
-          <FontAwesomeIcon icon={faSpinner} spin />
+          <FontAwesomeIcon icon={faSpinner} spin size="2x" />
           <p>Loading your wishlist...</p>
         </div>
       </div>
@@ -88,8 +174,8 @@ function Wishlist() {
     return (
       <div className="wishlist-container">
         <div className="wishlist-error">
-          <p>{error}</p>
-          <button onClick={fetchWishlist} className="retry-button">
+          <p>Error: {error}</p>
+          <button onClick={fetchWishlistData} className="retry-button">
             Try Again
           </button>
         </div>
@@ -97,7 +183,7 @@ function Wishlist() {
     );
   }
 
-  if (!wishlistItems.length) {
+  if (!wishlistItems || wishlistItems.length === 0) {
     return (
       <div className="wishlist-container">
         <div className="wishlist-empty">
@@ -116,51 +202,18 @@ function Wishlist() {
       <h1>My Wishlist</h1>
       <div className="wishlist-items">
         {wishlistItems.map((item) => (
-          <div key={item._id} className="wishlist-item">
-            <div className="wishlist-item-image">
-              <img 
-                src={item.product.image || 'https://via.placeholder.com/150x150?text=No+Image'} 
-                alt={item.product.name} 
-              />
-            </div>
-            
-            <div className="wishlist-item-details">
-              <h3>{item.product.name}</h3>
-              <p className="wishlist-item-price">${item.product.price.toFixed(2)}</p>
-              <p className="wishlist-item-description">{item.product.description}</p>
-            </div>
-            
-            <div className="wishlist-item-actions">
-              <button 
-                className="add-to-cart-button"
-                onClick={() => handleAddToCart(item.product)}
-              >
-                <FontAwesomeIcon icon={faShoppingCart} />
-                Add to Cart
-              </button>
-              
-              <button 
-                className={`notification-button ${item.notifyOnDiscount ? 'active' : ''}`}
-                onClick={() => handleToggleNotification(item.product._id, item.notifyOnDiscount)}
-                title={item.notifyOnDiscount ? 'Disable notifications' : 'Enable notifications'}
-              >
-                <FontAwesomeIcon icon={item.notifyOnDiscount ? faBell : faBellSlash} />
-                {item.notifyOnDiscount ? 'Notifications On' : 'Notifications Off'}
-              </button>
-              
-              <button 
-                className="remove-button"
-                onClick={() => handleRemoveFromWishlist(item.product._id)}
-              >
-                <FontAwesomeIcon icon={faTrash} />
-                Remove
-              </button>
-            </div>
-          </div>
+          <WishlistItem
+            key={item._id}
+            item={item}
+            onRemove={handleRemoveFromWishlist}
+            onToggleNotification={handleToggleNotification}
+            onAddToCart={handleAddToCart}
+            onProductClick={handleProductClick}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-export default Wishlist; 
+export default memo(Wishlist); 
