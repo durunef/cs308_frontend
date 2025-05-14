@@ -14,7 +14,12 @@ export const addToCartAuthenticated = async (productId, quantity) => {
 export const addToCartGuest = async (productId, quantity, cartId = null) => {
   const payload = { productId, quantity };
   if (cartId) payload.cartId = cartId;
-  const resp = await axios.post('/api/cart/add', payload);
+  
+  // Add cartId to headers if it exists
+  const headers = {};
+  if (cartId) headers.cartid = cartId;
+  
+  const resp = await axios.post('/api/cart/add', payload, { headers });
 
   if (resp.data?.status === 'success' && resp.data.data?._id) {
     localStorage.setItem('guestCartId', resp.data.data._id);
@@ -24,8 +29,8 @@ export const addToCartGuest = async (productId, quantity, cartId = null) => {
 
 /**
  * Fetch the cart:
- *  - if logged in, GET /api/cart → user’s cart
- *  - if guest & have guestCartId, GET /api/cart?cartId=… → guest’s cart
+ *  - if logged in, GET /api/cart → user's cart
+ *  - if guest & have guestCartId, GET /api/cart?cartId=… → guest's cart
  *  - else empty
  */
 export const getCart = async () => {
@@ -49,12 +54,17 @@ export const getCart = async () => {
 export const updateCartItem = async (productId, quantity) => {
   try {
     const payload = { productId, quantity };
+    const headers = {};
+    
     if (!localStorage.getItem('token')) {
       const guestId = localStorage.getItem('guestCartId');
-      if (guestId) payload.cartId = guestId;
-      else throw new Error('No cart ID for guest');
+      if (guestId) {
+        payload.cartId = guestId;
+        headers.cartid = guestId;
+      } else throw new Error('No cart ID for guest');
     }
-    const resp = await axios.post('/api/cart/update', payload);
+    
+    const resp = await axios.post('/api/cart/update', payload, { headers });
     return resp.data;
   } catch {
     return { status: 'error', message: 'Failed to update cart item' };
@@ -67,11 +77,17 @@ export const updateCartItem = async (productId, quantity) => {
 export const removeCartItem = async (productId) => {
   try {
     const payload = { productId };
+    const headers = {};
+    
     if (!localStorage.getItem('token')) {
       const guestId = localStorage.getItem('guestCartId');
-      if (guestId) payload.cartId = guestId;
+      if (guestId) {
+        payload.cartId = guestId;
+        headers.cartid = guestId;
+      }
     }
-    const resp = await axios.post('/api/cart/remove', payload);
+    
+    const resp = await axios.post('/api/cart/remove', payload, { headers });
     return resp.data;
   } catch {
     return { status: 'error', message: 'Failed to remove item' };
@@ -82,7 +98,7 @@ export const removeCartItem = async (productId) => {
  * Merge the old guest cart into the now-logged-in user cart:
  * 1) fetch guest cart via native fetch(...) so no JWT header is sent
  * 2) for each guest line, call addToCartAuthenticated(...)
- * 3) clear out guestCartId so we don’t merge again
+ * 3) clear out guestCartId so we don't merge again
  */
 export const mergeGuestCart = async (guestCartId) => {
   try {

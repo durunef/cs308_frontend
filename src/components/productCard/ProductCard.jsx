@@ -4,18 +4,24 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faShoppingCart, 
   faCheck, 
-  faEye
+  faEye,
+  faHeart,
+  faSpinner
 } from '@fortawesome/free-solid-svg-icons';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-toastify';
 import './ProductCard.css';
 
 function ProductCard({ product }) {
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { isAuthenticated } = useAuth();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [isWishlistLoading, setIsWishlistLoading] = useState(false);
   
   // Get the stock quantity from either field name convention
   const stockQuantity = 
@@ -23,6 +29,7 @@ function ProductCard({ product }) {
     typeof product.quantity_in_stocks === 'number' ? product.quantity_in_stocks : 0;
   
   const isOutOfStock = stockQuantity <= 0;
+  const isInWishlistState = isInWishlist(product._id);
 
   // Log stock info for debugging
   console.log('Product Card Stock:', {
@@ -69,6 +76,40 @@ function ProductCard({ product }) {
     navigateToProductInfo();
   };
 
+  const handleWishlistToggle = async (e) => {
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      toast.info('Please login to manage your wishlist');
+      navigate('/login');
+      return;
+    }
+
+    setIsWishlistLoading(true);
+    try {
+      if (isInWishlistState) {
+        const result = await removeFromWishlist(product._id);
+        if (result.success) {
+          toast.success('Removed from wishlist');
+        } else {
+          toast.error(result.error || 'Failed to remove from wishlist');
+        }
+      } else {
+        const result = await addToWishlist(product._id);
+        if (result.success) {
+          toast.success('Added to wishlist');
+        } else {
+          toast.error(result.error || 'Failed to add to wishlist');
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+      toast.error('An error occurred');
+    } finally {
+      setIsWishlistLoading(false);
+    }
+  };
+
   return (
     <div className="product-card" onClick={navigateToProductInfo}>
       <div className="product-card-image-container">
@@ -102,25 +143,40 @@ function ProductCard({ product }) {
         <div className="product-card-footer">
           <p className="product-price">${product.price.toFixed(2)}</p>
           
-          <button 
-            className={`add-to-cart-button ${addedToCart ? 'added' : ''} ${isOutOfStock ? 'disabled' : ''}`} 
-            onClick={handleAddToCart}
-            disabled={isAddingToCart || isOutOfStock}
-          >
-            {isAddingToCart ? (
-              <span className="loading-spinner-small"></span>
-            ) : addedToCart ? (
-              <>
-                <FontAwesomeIcon icon={faCheck} />
-                <span>Added</span>
-              </>
-            ) : (
-              <>
-                <FontAwesomeIcon icon={faShoppingCart} />
-                <span>Add to Cart</span>
-              </>
-            )}
-          </button>
+          <div className="product-card-actions">
+            <button 
+              className={`wishlist-button ${isInWishlistState ? 'in-wishlist' : ''}`}
+              onClick={handleWishlistToggle}
+              disabled={isWishlistLoading}
+              aria-label={isInWishlistState ? 'Remove from wishlist' : 'Add to wishlist'}
+            >
+              {isWishlistLoading ? (
+                <FontAwesomeIcon icon={faSpinner} spin />
+              ) : (
+                <FontAwesomeIcon icon={faHeart} />
+              )}
+            </button>
+
+            <button 
+              className={`add-to-cart-button ${addedToCart ? 'added' : ''} ${isOutOfStock ? 'disabled' : ''}`} 
+              onClick={handleAddToCart}
+              disabled={isAddingToCart || isOutOfStock}
+            >
+              {isAddingToCart ? (
+                <span className="loading-spinner-small"></span>
+              ) : addedToCart ? (
+                <>
+                  <FontAwesomeIcon icon={faCheck} />
+                  <span>Added</span>
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faShoppingCart} />
+                  <span>Add to Cart</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
+import { WishlistProvider } from "./context/WishlistContext";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "./theme.css";
@@ -22,58 +23,34 @@ import RateProducts from "./components/RateProducts/RateProducts";
 import ReviewApproval from "./components/ReviewApproval/ReviewApproval";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-createRoot(document.getElementById("root")).render(
+const root = createRoot(document.getElementById("root"));
+
+root.render(
   <StrictMode>
-    <AuthProvider>
-      <CartProvider>
-        <Router>
-          <Navbar />
-          <ToastContainer position="top-right" autoClose={3000} />
-          <Routes>
-            <Route path="/" element={<App />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/product/:productId" element={<ProductInfo />} />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={
-              <ProtectedRoute>
-                <Checkout />
-              </ProtectedRoute>
-            } />
-            <Route path="/order-confirmation/:orderId" element={
-              <ProtectedRoute>
-                <OrderConfirmation />
-              </ProtectedRoute>
-            } />
-            <Route path="/order-history" element={
-              <ProtectedRoute>
-                <OrderHistory />
-              </ProtectedRoute>
-            } />
-            <Route path="/rate-products/:orderId" element={
-              <ProtectedRoute>
-                <RateProducts />
-              </ProtectedRoute>
-            } />
-            <Route path="/review-approval" element={
-              <ProtectedRoute>
-                <ReviewApproval />
-              </ProtectedRoute>
-            } />
-            <Route path="/category/:categoryId" element={<CategoryPage />} />
-            <Route path="/add-product" element={
-              <ProtectedRoute>
-                <ProductForm />
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </Router>
-      </CartProvider>
-    </AuthProvider>
+    <Router>
+      <AuthProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <ToastContainer />
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<App />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/product/:productId" element={<ProductInfo />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/category/:categoryId" element={<CategoryPage />} />
+              <Route path="/add-product" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
+              <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+              <Route path="/order-confirmation" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
+              <Route path="/order-history" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} />
+              <Route path="/rate-products" element={<ProtectedRoute><RateProducts /></ProtectedRoute>} />
+              <Route path="/review-approval" element={<ProtectedRoute><ReviewApproval /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            </Routes>
+          </WishlistProvider>
+        </CartProvider>
+      </AuthProvider>
+    </Router>
   </StrictMode>
 );
