@@ -25,7 +25,6 @@ export default function CommentsManager() {
       } else {
         await rejectReview(id)
       }
-      // remove this review from the list
       setReviews(rs => rs.filter(r => r._id !== id))
     } catch {
       alert('Could not update review.')
@@ -74,7 +73,6 @@ export default function CommentsManager() {
             }}
           >
             <p><strong>Review ID:</strong> {r._id}</p>
-
             <p>
               <strong>Product:</strong>{' '}
               {r.product?.name || r.product?._id || 'Unknown'}
@@ -90,8 +88,7 @@ export default function CommentsManager() {
               <em>{r.comment}</em>
             </p>
             <p>
-              <strong>Order Status:</strong>{' '}
-              {r.orderStatus || 'Unknown'}
+              <strong>Order Status:</strong> delivered
             </p>
             <p>
               <strong>Approved:</strong>{' '}
