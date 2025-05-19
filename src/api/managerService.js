@@ -21,6 +21,7 @@ export const updateStock = (id, quantityInStock) =>
     .patch(`/api/v1/product-manager/products/${id}/stock`, { quantityInStock })
     .then(res => res.data.data.product)
 
+
 // ─── Categories ────────────────────────────────────────────────────────────
 export const fetchAllCategories = () =>
   axios
@@ -35,6 +36,7 @@ export const createCategory = name =>
 export const deleteCategory = id =>
   axios.delete(`/api/v1/product-manager/categories/${id}`)
 
+
 // ─── Invoices ───────────────────────────────────────────────────────────────
 export const fetchAllInvoices = () =>
   axios
@@ -42,7 +44,7 @@ export const fetchAllInvoices = () =>
     .then(res => res.data.data.orders)
 
 
-    // src/api/managerService.js
+// ─── Deliveries ────────────────────────────────────────────────────────────
 export const fetchAllDeliveries = () =>
   axios
     .get('/api/v1/product-manager/deliveries')
@@ -50,6 +52,25 @@ export const fetchAllDeliveries = () =>
 
 export const updateDeliveryStatus = (id, status) =>
   axios
-    .patch(`/api/v1/product-manager/deliveries/${id}/status`, { status })
+    .patch(`/api/v1/product-manager/deliveries/${id}`, { status })
     .then(res => res.data.data.delivery)
-    
+
+
+// ─── Reviews ────────────────────────────────────────────────────────────────
+// fetch all reviews (already populated with product.name and user.name on the backend)
+export const fetchAllReviews = () =>
+  axios
+    .get('/api/v1/product-manager/reviews')
+    .then(res => res.data.data.reviews)
+
+// approve a review
+export const approveReview = reviewId =>
+  axios
+    .patch(`/api/v1/product-manager/reviews/${reviewId}/approve`)
+    .then(res => res.data.data.review)
+
+// reject a review
+export const rejectReview = reviewId =>
+  axios
+    .patch(`/api/v1/product-manager/reviews/${reviewId}/reject`)
+    .then(res => res.data.data.review)

@@ -33,9 +33,6 @@ export default function DeliveriesManager() {
   if (deliveries.length === 0)
     return <p style={{ color: '#8B4513' }}>No deliveries found.</p>
 
-  // statuses that can still be changed:
-  const updatable = ['processing', 'in-transit']
-
   return (
     <div
       style={{
@@ -75,9 +72,10 @@ export default function DeliveriesManager() {
             <p><strong>Delivery ID:</strong> {d._id}</p>
             <p><strong>Customer ID:</strong> {d.user?._id || 'Unknown'}</p>
             <p><strong>Product ID:</strong> {d.product?._id || 'Unknown'}</p>
-            <p><strong>Quantity:</strong> {d.quantity || '—'}</p>
+            <p><strong>Quantity:</strong> {d.quantity}</p>
             <p>
-              <strong>Total:</strong> {d.total.toFixed(2)} ₺
+              <strong>Total:</strong>{' '}
+              {d.total.toFixed(2)} ₺
             </p>
             <p>
               <strong>Address:</strong>{' '}
@@ -85,30 +83,23 @@ export default function DeliveriesManager() {
                 ? `${d.address.street}, ${d.address.city}, ${d.address.postalCode}`
                 : 'N/A'}
             </p>
-
-            <div>
+            <p>
               <strong>Status:</strong>{' '}
-              {updatable.includes(d.status) ? (
-                <select
-                  value={d.status}
-                  onChange={e => handleStatusChange(d._id, e.target.value)}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: 4,
-                    border: '1px solid #ccc'
-                  }}
-                >
-                  <option value="processing">processing</option>
-                  <option value="in-transit">in-transit</option>
-                  <option value="delivered">delivered</option>
-                  <option value="cancelled">cancelled</option>
-                </select>
-              ) : (
-                <span style={{ textTransform: 'capitalize' }}>
-                  {d.status}
-                </span>
-              )}
-            </div>
+              <select
+                value={d.status}
+                onChange={e => handleStatusChange(d._id, e.target.value)}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: 4,
+                  border: '1px solid #ccc'
+                }}
+              >
+                <option value="pending">pending</option>
+                <option value="shipped">shipped</option>
+                <option value="delivered">delivered</option>
+                <option value="cancelled">cancelled</option>
+              </select>
+            </p>
           </div>
         ))}
       </div>

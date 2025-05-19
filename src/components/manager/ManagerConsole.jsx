@@ -6,6 +6,7 @@ import ProductsManager    from './ProductsManager'
 import CategoriesManager  from './CategoriesManager'
 import InvoicesManager    from './InvoicesManager'
 import DeliveriesManager  from './DeliveriesManager'
+import CommentsManager    from './CommentsManager'
 
 export default function ManagerConsole() {
   return (
@@ -78,7 +79,7 @@ export default function ManagerConsole() {
                 Invoices
               </NavLink>
             </li>
-            <li>
+            <li style={{ marginBottom: '0.5rem' }}>
               <NavLink
                 to="/manager/deliveries"
                 end
@@ -92,6 +93,22 @@ export default function ManagerConsole() {
                 })}
               >
                 Deliveries
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/manager/comments"
+                end
+                style={({ isActive }) => ({
+                  display: 'inline-block',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: 4,
+                  textDecoration: 'none',
+                  color: isActive ? '#fff' : '#8B4513',
+                  background: isActive ? '#8B4513' : 'transparent'
+                })}
+              >
+                Comments
               </NavLink>
             </li>
           </ul>
@@ -110,10 +127,12 @@ export default function ManagerConsole() {
           {/* /manager → /manager/products */}
           <Route index element={<Navigate to="products" replace />} />
 
-          <Route path="products"    element={<ProductsManager />} />
-          <Route path="categories"  element={<CategoriesManager />} />
-          <Route path="invoices"    element={<InvoicesManager />} />
-          <Route path="deliveries"  element={<DeliveriesManager />} />
+          {/* Manager routes */}
+          <Route path="products"   element={<ProductsManager />} />
+          <Route path="categories" element={<CategoriesManager />} />
+          <Route path="invoices"   element={<InvoicesManager />} />
+          <Route path="deliveries" element={<DeliveriesManager />} />
+          <Route path="comments"   element={<CommentsManager />} />
 
           {/* fallback */}
           <Route path="*" element={<h2>❓ Page Not Found</h2>} />
