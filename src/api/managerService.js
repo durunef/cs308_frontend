@@ -1,13 +1,36 @@
-// src/api/managerService.js
-import axios from './axios';
+import axios from './axios'
 
-// Products
+// ─── Products ────────────────────────────────────────────────────────────────
 export const fetchAllProducts = () =>
-  axios.get('/api/v1/product-manager/products').then(r => r.data);
+  axios
+    .get('/api/v1/product-manager/products')
+    .then(res => res.data.data.products)
 
 export const createProduct = formData =>
-  axios.post('/api/v1/product-manager/products', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }).then(r => r.data);
+  axios
+    .post('/api/v1/product-manager/products', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    .then(res => res.data.data.product)
 
-// …and so on for update/delete, categories, stocks, reviews, orders, invoices
+export const deleteProduct = id =>
+  axios.delete(`/api/v1/product-manager/products/${id}`)
+
+export const updateStock = (id, quantityInStock) =>
+  axios
+    .patch(`/api/v1/product-manager/products/${id}/stock`, { quantityInStock })
+    .then(res => res.data.data.product)
+
+// ─── Categories ────────────────────────────────────────────────────────────
+export const fetchAllCategories = () =>
+  axios
+    .get('/api/v1/product-manager/categories')
+    .then(res => res.data.data.categories)
+
+export const createCategory = name =>
+  axios
+    .post('/api/v1/product-manager/categories', { name })
+    .then(res => res.data.data.category)
+
+export const deleteCategory = id =>
+  axios.delete(`/api/v1/product-manager/categories/${id}`)

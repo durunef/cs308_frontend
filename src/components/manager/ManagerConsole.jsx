@@ -1,51 +1,69 @@
-import React from "react";
-import { NavLink, Routes, Route, Navigate } from "react-router-dom";
-import "./ManagerConsole.css"; // optional: bring in your CSS
-
-// placeholder screens
-function ProductsManager() {
-  return <h2>📦 Manage Products</h2>;
-}
-function CategoriesManager() {
-  return <h2>📁 Manage Categories</h2>;
-}
+import React from 'react'
+import { NavLink, Routes, Route, Navigate } from 'react-router-dom'
+import ProductsManager from './ProductsManager'
 
 export default function ManagerConsole() {
-  console.log("▶︎ ManagerConsole rendered at", window.location.pathname);
-
   return (
-    <div style={{ display: "flex", minHeight: "70vh" }}>
+    <div
+      style={{
+        display: 'flex',
+        minHeight: '70vh',
+        fontFamily: 'Trebuchet MS, sans-serif'
+      }}
+    >
       {/* Sidebar */}
       <aside
         style={{
           width: 200,
-          padding: "1rem",
-          borderRight: "1px solid rgba(0,0,0,0.1)",
-          background: "rgba(0,0,0,0.03)"
+          padding: '1.5rem',
+          borderRight: '1px solid rgba(0,0,0,0.1)',
+          background: '#fafafa'
         }}
       >
-        <h3>Manager Menu</h3>
+        <h3 style={{ color: '#8B4513', marginBottom: '1rem' }}>
+          Manager Menu
+        </h3>
         <nav>
-          <ul style={{ listStyle: "none", padding: 0 }}>
-            <li>
-              <NavLink to="products">Products</NavLink>
-            </li>
-            <li>
-              <NavLink to="categories">Categories</NavLink>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            <li style={{ marginBottom: '0.5rem' }}>
+              <NavLink
+                to="/manager/products"
+                end
+                style={({ isActive }) => ({
+                  textDecoration: 'none',
+                  color: isActive ? '#fff' : '#8B4513',
+                  background: isActive ? '#8B4513' : 'transparent',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: 4,
+                  display: 'inline-block'
+                })}
+              >
+                Products
+              </NavLink>
             </li>
           </ul>
         </nav>
       </aside>
 
       {/* Content */}
-      <main style={{ flex: 1, padding: "1rem" }}>
+      <main
+        style={{
+          flex: 1,
+          padding: '2rem',
+          background: '#fdf8f0'
+        }}
+      >
         <Routes>
+          {/* /manager → /manager/products */}
           <Route index element={<Navigate to="products" replace />} />
+
+          {/* /manager/products */}
           <Route path="products" element={<ProductsManager />} />
-          <Route path="categories" element={<CategoriesManager />} />
-          <Route path="*" element={<h2>❓ Not Found</h2>} />
+
+          {/* Not found */}
+          <Route path="*" element={<h2>❓ Page Not Found</h2>} />
         </Routes>
       </main>
     </div>
-  );
+  )
 }
