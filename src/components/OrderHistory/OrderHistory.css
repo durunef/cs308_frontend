@@ -511,12 +511,15 @@
   }
   
   .order-actions {
-    width: 100%;
+    flex-wrap: wrap;
   }
   
   .view-details-button,
-  .download-invoice-button {
+  .download-invoice-button,
+  .cancel-order-button,
+  .refund-request-button {
     flex: 1;
+    min-width: 120px;
     justify-content: center;
   }
   
@@ -538,4 +541,86 @@
   .order-detail-panel {
     padding: 1rem;
   }
+}
+
+.cancel-order-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-order-button:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.cancel-order-button:disabled {
+  background-color: #e4606d;
+  cursor: not-allowed;
+}
+
+.refund-status {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+  border: 1px solid #e9ecef;
+}
+
+.refund-status h4 {
+  color: #6b3e20;
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+}
+
+.refund-status-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+}
+
+.refund-status-badge.status-pending {
+  background-color: #fff8e1;
+  color: #f57c00;
+}
+
+.refund-status-badge.status-approved {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.refund-status-badge.status-rejected {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.refund-status-badge.status-completed {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.refund-details {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.refund-details p {
+  margin: 0.5rem 0;
+}
+
+.refund-details p:first-child {
+  font-weight: 600;
+  color: #333;
 } 

@@ -12,10 +12,13 @@ import {
   faMapMarkerAlt,
   faPhone,
   faInfoCircle,
-  faBoxOpen
+  faBoxOpen,
+  faTimes,
+  faUndo
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
-import { getOrderHistory, downloadInvoice, getOrderStatus } from '../../api/orderService';
+import { getOrderHistory, downloadInvoice, getOrderStatus, cancelOrder } from '../../api/orderService';
+import RefundRequest from '../RefundRequest/RefundRequest';
 import './OrderHistory.css';
 
 function OrderHistory() {
@@ -27,6 +30,12 @@ function OrderHistory() {
   const [error, setError] = useState(null);
   const [refreshingStatus, setRefreshingStatus] = useState(false);
   const [expandedOrder, setExpandedOrder] = useState(null);
+  const [cancellingOrder, setCancellingOrder] = useState(null);
+  const [refundRequests, setRefundRequests] = useState(() => {
+    // Load refund requests from localStorage on component mount
+    const savedRefunds = localStorage.getItem('refundRequests');
+    return savedRefunds ? JSON.parse(savedRefunds) : {};
+  });
   
   // Check if component is being rendered inside profile page
   const isInsideProfile = location.pathname.includes('/profile');
@@ -264,6 +273,43 @@ function OrderHistory() {
     }
   };
   
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) {
+      return;
+    }
+
+    setCancellingOrder(orderId);
+    try {
+      const response = await cancelOrder(orderId);
+      // Update the order in the list
+      setOrders(orders.map(order => 
+        order._id === orderId 
+          ? { ...order, status: 'cancelled', cancelledAt: response.order.cancelledAt }
+          : order
+      ));
+    } catch (err) {
+      console.error('Error cancelling order:', err);
+      alert(err.response?.data?.message || 'Failed to cancel order. Please try again later.');
+    } finally {
+      setCancellingOrder(null);
+    }
+  };
+
+  // Save refund requests to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('refundRequests', JSON.stringify(refundRequests));
+  }, [refundRequests]);
+
+  const handleRefundRequested = (refund) => {
+    setRefundRequests(prev => {
+      const updated = {
+        ...prev,
+        [refund.order]: refund
+      };
+      return updated;
+    });
+  };
+  
   if (loading) {
     return (
       <div className="order-history-container">
@@ -358,24 +404,51 @@ function OrderHistory() {
                   </div>
                   
                   <div className="order-actions">
-                    <Link 
-                      to={`/order-confirmation/${order._id}`} 
-                      className="view-details-button"
-                      title="View Order Details"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        saveOrderForDetailView(order);
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faEye} /> Details
-                    </Link>
-                    <button
-                      className="download-invoice-button"
-                      onClick={(e) => handleDownloadInvoice(order._id, e)}
-                      title="Download Invoice"
-                    >
-                      <FontAwesomeIcon icon={faFileInvoice} /> Invoice
-                    </button>
+                    {order.status !== 'cancelled' && (
+                      <>
+                        <Link 
+                          to={`/order-confirmation/${order._id}`} 
+                          className="view-details-button"
+                          title="View Order Details"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            saveOrderForDetailView(order);
+                          }}
+                        >
+                          <FontAwesomeIcon icon={faEye} /> Details
+                        </Link>
+                        <button
+                          className="download-invoice-button"
+                          onClick={(e) => handleDownloadInvoice(order._id, e)}
+                          title="Download Invoice"
+                        >
+                          <FontAwesomeIcon icon={faFileInvoice} /> Invoice
+                        </button>
+                      </>
+                    )}
+                    {order.status === 'processing' && (
+                      <button
+                        className="cancel-order-button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCancelOrder(order._id);
+                        }}
+                        disabled={cancellingOrder === order._id}
+                        title="Cancel Order"
+                      >
+                        {cancellingOrder === order._id ? (
+                          <FontAwesomeIcon icon={faSpinner} spin />
+                        ) : (
+                          <FontAwesomeIcon icon={faTimes} />
+                        )} Cancel
+                      </button>
+                    )}
+                    {order.status === 'delivered' && !refundRequests[order._id] && (
+                      <RefundRequest 
+                        order={order} 
+                        onRefundRequested={handleRefundRequested}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -445,6 +518,19 @@ function OrderHistory() {
                       )}
                     </div>
                   </div>
+                  
+                  {refundRequests[order._id] && (
+                    <div className="refund-status">
+                      <h4>Refund Status</h4>
+                      <div className={`refund-status-badge status-${refundRequests[order._id].status}`}>
+                        {refundRequests[order._id].status}
+                      </div>
+                      <div className="refund-details">
+                        <p>Total Refund Amount: ${refundRequests[order._id].totalRefundAmount.toFixed(2)}</p>
+                        <p>Requested on: {new Date(refundRequests[order._id].createdAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

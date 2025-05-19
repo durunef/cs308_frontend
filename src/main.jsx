@@ -67,7 +67,7 @@ root.render(
               />
 
               <Route
-                path="/order-confirmation"
+                path="/order-confirmation/:orderId"
                 element={
                   <ProtectedRoute>
                     <OrderConfirmation />

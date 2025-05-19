@@ -19,7 +19,7 @@ import {
   faCheck,
   faSort
 } from "@fortawesome/free-solid-svg-icons";
-import "./profile.css";
+import "./Profile.css";
 import { useAuth } from "../../context/AuthContext";
 import { getOrderHistory } from "../../api/orderService";
 import OrderHistory from "../OrderHistory/OrderHistory";
