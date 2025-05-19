@@ -1,6 +1,8 @@
+// src/components/manager/ManagerConsole.jsx
 import React from 'react'
 import { NavLink, Routes, Route, Navigate } from 'react-router-dom'
-import ProductsManager from './ProductsManager'
+import ProductsManager   from './ProductsManager'
+import CategoriesManager from './CategoriesManager'
 
 export default function ManagerConsole() {
   return (
@@ -31,14 +33,30 @@ export default function ManagerConsole() {
                 end
                 style={({ isActive }) => ({
                   textDecoration: 'none',
-                  color: isActive ? '#fff' : '#8B4513',
-                  background: isActive ? '#8B4513' : 'transparent',
-                  padding: '0.4rem 0.8rem',
+                  color:    isActive ? '#fff' : '#8B4513',
+                  background:isActive ? '#8B4513' : 'transparent',
+                  padding:  '0.4rem 0.8rem',
                   borderRadius: 4,
-                  display: 'inline-block'
+                  display:  'inline-block'
                 })}
               >
                 Products
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/manager/categories"
+                end
+                style={({ isActive }) => ({
+                  textDecoration: 'none',
+                  color:    isActive ? '#fff' : '#8B4513',
+                  background:isActive ? '#8B4513' : 'transparent',
+                  padding:  '0.4rem 0.8rem',
+                  borderRadius: 4,
+                  display:  'inline-block'
+                })}
+              >
+                Categories
               </NavLink>
             </li>
           </ul>
@@ -60,7 +78,10 @@ export default function ManagerConsole() {
           {/* /manager/products */}
           <Route path="products" element={<ProductsManager />} />
 
-          {/* Not found */}
+          {/* /manager/categories */}
+          <Route path="categories" element={<CategoriesManager />} />
+
+          {/* catch-all */}
           <Route path="*" element={<h2>❓ Page Not Found</h2>} />
         </Routes>
       </main>
