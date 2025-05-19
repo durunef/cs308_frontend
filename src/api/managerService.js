@@ -36,6 +36,16 @@ export const createCategory = name =>
 export const deleteCategory = id =>
   axios.delete(`/api/v1/product-manager/categories/${id}`)
 
+/**
+ * Update a category by ID
+ * @param {string} categoryId
+ * @param {string} newName
+ */
+export const updateCategory = (categoryId, newName) =>
+  axios
+    .patch(`/api/v1/product-manager/categories/${categoryId}`, { name: newName })
+    .then(res => res.data.data.category)
+
 
 // ─── Invoices ───────────────────────────────────────────────────────────────
 export const fetchAllInvoices = () =>
@@ -45,37 +55,29 @@ export const fetchAllInvoices = () =>
 
 
 // ─── Deliveries ────────────────────────────────────────────────────────────
-// ─── Deliveries (all orders) ────────────────────────────────────────────
-// Was: GET /product-manager/deliveries (only in-transit/delivered)
+// (we’ll re-use the invoices endpoint to get ALL orders as “deliveries”)
 export const fetchAllDeliveries = () =>
   axios
-    .get('/api/v1/product-manager/invoices')   // returns ALL orders
+    .get('/api/v1/product-manager/invoices')
     .then(res => res.data.data.orders)
 
-// Update status (this stays the same)
 export const updateDeliveryStatus = (id, status) =>
   axios
     .patch(`/api/v1/product-manager/deliveries/${id}`, { status })
     .then(res => res.data.data.order)
 
 
-    
-
-
 // ─── Reviews ────────────────────────────────────────────────────────────────
-// fetch all reviews (already populated with product.name and user.name on the backend)
 export const fetchAllReviews = () =>
   axios
     .get('/api/v1/product-manager/reviews')
     .then(res => res.data.data.reviews)
 
-// approve a review
 export const approveReview = reviewId =>
   axios
     .patch(`/api/v1/product-manager/reviews/${reviewId}/approve`)
     .then(res => res.data.data.review)
 
-// reject a review
 export const rejectReview = reviewId =>
   axios
     .patch(`/api/v1/product-manager/reviews/${reviewId}/reject`)
