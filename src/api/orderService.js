@@ -180,3 +180,34 @@ export const emailInvoice = async (orderId) => {
   const response = await axios.post(`/api/orders/${orderId}/email-invoice`);
   return response.data;
 };
+
+/**
+ * Cancels an order
+ * @param {string} orderId - The ID of the order to cancel
+ * @returns {Promise<Object>} The response data containing the cancelled order
+ */
+export const cancelOrder = async (orderId) => {
+  const response = await axios.post(`/api/orders/${orderId}/cancel`);
+  return response.data;
+};
+
+/**
+ * Requests a refund for specific items in an order
+ * @param {string} orderId - The ID of the order
+ * @param {Array} items - Array of items to refund with productId, quantity, and reason
+ * @returns {Promise<Object>} The response data containing the refund request details
+ */
+export const requestRefund = async (orderId, items) => {
+  const response = await axios.post(`/api/orders/${orderId}/refund`, { items });
+  return response.data;
+};
+
+/**
+ * Gets the status of a refund request
+ * @param {string} refundId - The ID of the refund request
+ * @returns {Promise<Object>} The response data containing the refund status
+ */
+export const getRefundStatus = async (refundId) => {
+  const response = await axios.get(`/api/orders/refund/${refundId}`);
+  return response.data;
+};

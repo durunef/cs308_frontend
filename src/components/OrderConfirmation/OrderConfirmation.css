@@ -1116,4 +1116,72 @@
 
 .pdf-error svg {
   color: #f57c00;
+}
+
+/* Refund Request Section */
+.refund-request-section {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.refund-status {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.refund-status h4 {
+  color: #6b3e20;
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+}
+
+.refund-status-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+}
+
+.refund-status-badge.status-pending {
+  background-color: #fff8e1;
+  color: #f57c00;
+}
+
+.refund-status-badge.status-approved {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.refund-status-badge.status-rejected {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.refund-status-badge.status-completed {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.refund-details {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.refund-details p {
+  margin: 0.5rem 0;
+}
+
+.refund-details p:first-child {
+  font-weight: 600;
+  color: #333;
 } 

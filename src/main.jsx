@@ -43,7 +43,7 @@ root.render(
               <Route path="/category/:categoryId" element={<CategoryPage />} />
               <Route path="/add-product" element={<ProtectedRoute><ProductForm /></ProtectedRoute>} />
               <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-              <Route path="/order-confirmation" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
+              <Route path="/order-confirmation/:orderId" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
               <Route path="/order-history" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} />
               <Route path="/rate-products" element={<ProtectedRoute><RateProducts /></ProtectedRoute>} />
               <Route path="/review-approval" element={<ProtectedRoute><ReviewApproval /></ProtectedRoute>} />

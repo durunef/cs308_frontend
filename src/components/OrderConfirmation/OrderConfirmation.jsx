@@ -20,6 +20,7 @@ import { getOrderDetails, downloadInvoice, getOrderStatus, emailInvoice } from '
 import './OrderConfirmation.css';
 import axios from 'axios';
 import ProductReview from '../ProductReview/ProductReview';
+import RefundRequest from '../RefundRequest/RefundRequest';
 
 function OrderConfirmation() {
   const { orderId } = useParams();
@@ -34,6 +35,10 @@ function OrderConfirmation() {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfError, setPdfError] = useState(null);
+  const [refundRequests, setRefundRequests] = useState(() => {
+    const savedRefunds = localStorage.getItem('refundRequests');
+    return savedRefunds ? JSON.parse(savedRefunds) : {};
+  });
   
   // Debug message when component loads
   console.log(`OrderConfirmation component mounted with orderId: ${orderId}`);
@@ -586,6 +591,21 @@ function OrderConfirmation() {
     };
   }, []);
   
+  // Save refund requests to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('refundRequests', JSON.stringify(refundRequests));
+  }, [refundRequests]);
+
+  const handleRefundRequested = (refund) => {
+    setRefundRequests(prev => {
+      const updated = {
+        ...prev,
+        [refund.order]: refund
+      };
+      return updated;
+    });
+  };
+  
   if (loading) {
     return (
       <div className="order-confirmation-container">
@@ -749,6 +769,29 @@ function OrderConfirmation() {
           ))}
         </div>
       </div>
+      
+      {/* Add Refund Request Section */}
+      {orderStatus === 'delivered' && !refundRequests[order._id] && (
+        <div className="refund-request-section">
+          <RefundRequest 
+            order={order} 
+            onRefundRequested={handleRefundRequested}
+          />
+        </div>
+      )}
+
+      {refundRequests[order._id] && (
+        <div className="refund-status">
+          <h4>Refund Status</h4>
+          <div className={`refund-status-badge status-${refundRequests[order._id].status}`}>
+            {refundRequests[order._id].status}
+          </div>
+          <div className="refund-details">
+            <p>Total Refund Amount: ${refundRequests[order._id].totalRefundAmount.toFixed(2)}</p>
+            <p>Requested on: {new Date(refundRequests[order._id].createdAt).toLocaleDateString()}</p>
+          </div>
+        </div>
+      )}
       
       {/* Invoice Section */}
       <div className="invoice-section">
