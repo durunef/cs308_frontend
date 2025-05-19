@@ -1,3 +1,4 @@
+// src/components/manager/CommentsManager.jsx
 import React, { useState, useEffect } from 'react'
 import {
   fetchAllReviews,
@@ -73,6 +74,7 @@ export default function CommentsManager() {
             }}
           >
             <p><strong>Review ID:</strong> {r._id}</p>
+
             <p>
               <strong>Product:</strong>{' '}
               {r.product?.name || r.product?._id || 'Unknown'}
@@ -86,6 +88,10 @@ export default function CommentsManager() {
               <strong>Comment:</strong>
               <br />
               <em>{r.comment}</em>
+            </p>
+            <p>
+              <strong>Order Status:</strong>{' '}
+              {r.orderStatus || 'Unknown'}
             </p>
             <p>
               <strong>Approved:</strong>{' '}

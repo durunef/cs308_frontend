@@ -45,15 +45,21 @@ export const fetchAllInvoices = () =>
 
 
 // ─── Deliveries ────────────────────────────────────────────────────────────
+// ─── Deliveries (all orders) ────────────────────────────────────────────
+// Was: GET /product-manager/deliveries (only in-transit/delivered)
 export const fetchAllDeliveries = () =>
   axios
-    .get('/api/v1/product-manager/deliveries')
-    .then(res => res.data.data.deliveries)
+    .get('/api/v1/product-manager/invoices')   // returns ALL orders
+    .then(res => res.data.data.orders)
 
+// Update status (this stays the same)
 export const updateDeliveryStatus = (id, status) =>
   axios
     .patch(`/api/v1/product-manager/deliveries/${id}`, { status })
-    .then(res => res.data.data.delivery)
+    .then(res => res.data.data.order)
+
+
+    
 
 
 // ─── Reviews ────────────────────────────────────────────────────────────────
