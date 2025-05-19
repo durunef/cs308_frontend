@@ -404,24 +404,28 @@ function OrderHistory() {
                   </div>
                   
                   <div className="order-actions">
-                    <Link 
-                      to={`/order-confirmation/${order._id}`} 
-                      className="view-details-button"
-                      title="View Order Details"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        saveOrderForDetailView(order);
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faEye} /> Details
-                    </Link>
-                    <button
-                      className="download-invoice-button"
-                      onClick={(e) => handleDownloadInvoice(order._id, e)}
-                      title="Download Invoice"
-                    >
-                      <FontAwesomeIcon icon={faFileInvoice} /> Invoice
-                    </button>
+                    {order.status !== 'cancelled' && (
+                      <>
+                        <Link 
+                          to={`/order-confirmation/${order._id}`} 
+                          className="view-details-button"
+                          title="View Order Details"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            saveOrderForDetailView(order);
+                          }}
+                        >
+                          <FontAwesomeIcon icon={faEye} /> Details
+                        </Link>
+                        <button
+                          className="download-invoice-button"
+                          onClick={(e) => handleDownloadInvoice(order._id, e)}
+                          title="Download Invoice"
+                        >
+                          <FontAwesomeIcon icon={faFileInvoice} /> Invoice
+                        </button>
+                      </>
+                    )}
                     {order.status === 'processing' && (
                       <button
                         className="cancel-order-button"
