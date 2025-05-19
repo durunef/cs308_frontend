@@ -34,3 +34,9 @@ export const createCategory = name =>
 
 export const deleteCategory = id =>
   axios.delete(`/api/v1/product-manager/categories/${id}`)
+
+// ─── Invoices ───────────────────────────────────────────────────────────────
+export const fetchAllInvoices = () =>
+  axios
+    .get('/api/v1/product-manager/invoices')
+    .then(res => res.data.data.orders)

@@ -1,8 +1,10 @@
 // src/components/manager/ManagerConsole.jsx
 import React from 'react'
 import { NavLink, Routes, Route, Navigate } from 'react-router-dom'
-import ProductsManager   from './ProductsManager'
-import CategoriesManager from './CategoriesManager'
+
+import ProductsManager    from './ProductsManager'
+import CategoriesManager  from './CategoriesManager'
+import InvoicesManager    from './InvoicesManager'
 
 export default function ManagerConsole() {
   return (
@@ -32,38 +34,52 @@ export default function ManagerConsole() {
                 to="/manager/products"
                 end
                 style={({ isActive }) => ({
-                  textDecoration: 'none',
-                  color:    isActive ? '#fff' : '#8B4513',
-                  background:isActive ? '#8B4513' : 'transparent',
-                  padding:  '0.4rem 0.8rem',
+                  display: 'inline-block',
+                  padding: '0.4rem 0.8rem',
                   borderRadius: 4,
-                  display:  'inline-block'
+                  textDecoration: 'none',
+                  color: isActive ? '#fff' : '#8B4513',
+                  background: isActive ? '#8B4513' : 'transparent'
                 })}
               >
                 Products
               </NavLink>
             </li>
-            <li>
+            <li style={{ marginBottom: '0.5rem' }}>
               <NavLink
                 to="/manager/categories"
-                end
                 style={({ isActive }) => ({
-                  textDecoration: 'none',
-                  color:    isActive ? '#fff' : '#8B4513',
-                  background:isActive ? '#8B4513' : 'transparent',
-                  padding:  '0.4rem 0.8rem',
+                  display: 'inline-block',
+                  padding: '0.4rem 0.8rem',
                   borderRadius: 4,
-                  display:  'inline-block'
+                  textDecoration: 'none',
+                  color: isActive ? '#fff' : '#8B4513',
+                  background: isActive ? '#8B4513' : 'transparent'
                 })}
               >
                 Categories
+              </NavLink>
+            </li>
+            <li style={{ marginBottom: '0.5rem' }}>
+              <NavLink
+                to="/manager/invoices"
+                style={({ isActive }) => ({
+                  display: 'inline-block',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: 4,
+                  textDecoration: 'none',
+                  color: isActive ? '#fff' : '#8B4513',
+                  background: isActive ? '#8B4513' : 'transparent'
+                })}
+              >
+                Invoices
               </NavLink>
             </li>
           </ul>
         </nav>
       </aside>
 
-      {/* Content */}
+      {/* Content Area */}
       <main
         style={{
           flex: 1,
@@ -72,16 +88,13 @@ export default function ManagerConsole() {
         }}
       >
         <Routes>
-          {/* /manager → /manager/products */}
-          <Route index element={<Navigate to="products" replace />} />
+          {/* When hitting /manager exactly, forward to /manager/products */}
+          <Route path="/" element={<Navigate to="products" replace />} />
 
-          {/* /manager/products */}
-          <Route path="products" element={<ProductsManager />} />
-
-          {/* /manager/categories */}
+          <Route path="products"   element={<ProductsManager />} />
           <Route path="categories" element={<CategoriesManager />} />
+          <Route path="invoices"   element={<InvoicesManager />} />
 
-          {/* catch-all */}
           <Route path="*" element={<h2>❓ Page Not Found</h2>} />
         </Routes>
       </main>
