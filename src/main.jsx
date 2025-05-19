@@ -102,7 +102,7 @@ root.render(
                 }
               />
 
-              {/* ─── Manager area ─────────────────────────────── */}
+              {/* Manager area */}
               <Route
                 path="/manager/*"
                 element={
@@ -111,7 +111,6 @@ root.render(
                   </ManagerRoute>
                 }
               />
-              {/* ────────────────────────────────────────────────── */}
 
               <Route
                 path="/profile"

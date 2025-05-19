@@ -82,15 +82,20 @@ export const deleteProduct = async (productId) => {
 };
 
 // Submit a review (rating and comment)
-export const submitReview = async (productId, review) => {
+export const submitReview = async (productId, { rating, comment }) => {
   try {
-    const response = await axios.post(`/api/products/${productId}/reviews`, review);
-    return response.data;
-  } catch (error) {
-    console.error(`Error submitting review for product ${productId}:`, error);
-    throw error;
+    const { data } = await axios.post(
+      `/api/v1/products/${productId}/reviews`,
+      { rating, comment }
+    )
+    // data.data.review should be the new review
+    return data.data.review
+  } catch (err) {
+    console.error('Error submitting review:', err)
+    // re‐throw so the component can catch it
+    throw err
   }
-};
+}
 
 // Get reviews for a product
 export const getProductReviews = async (productId) => {

@@ -1,6 +1,12 @@
+// src/components/manager/ManagerConsole.jsx
 import React from 'react'
 import { NavLink, Routes, Route, Navigate } from 'react-router-dom'
-import ProductsManager from './ProductsManager'
+
+import ProductsManager    from './ProductsManager'
+import CategoriesManager  from './CategoriesManager'
+import InvoicesManager    from './InvoicesManager'
+import DeliveriesManager  from './DeliveriesManager'
+import CommentsManager    from './CommentsManager'
 
 export default function ManagerConsole() {
   return (
@@ -30,22 +36,86 @@ export default function ManagerConsole() {
                 to="/manager/products"
                 end
                 style={({ isActive }) => ({
-                  textDecoration: 'none',
-                  color: isActive ? '#fff' : '#8B4513',
-                  background: isActive ? '#8B4513' : 'transparent',
+                  display: 'inline-block',
                   padding: '0.4rem 0.8rem',
                   borderRadius: 4,
-                  display: 'inline-block'
+                  textDecoration: 'none',
+                  color: isActive ? '#fff' : '#8B4513',
+                  background: isActive ? '#8B4513' : 'transparent'
                 })}
               >
                 Products
+              </NavLink>
+            </li>
+            <li style={{ marginBottom: '0.5rem' }}>
+              <NavLink
+                to="/manager/categories"
+                end
+                style={({ isActive }) => ({
+                  display: 'inline-block',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: 4,
+                  textDecoration: 'none',
+                  color: isActive ? '#fff' : '#8B4513',
+                  background: isActive ? '#8B4513' : 'transparent'
+                })}
+              >
+                Categories
+              </NavLink>
+            </li>
+            <li style={{ marginBottom: '0.5rem' }}>
+              <NavLink
+                to="/manager/invoices"
+                end
+                style={({ isActive }) => ({
+                  display: 'inline-block',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: 4,
+                  textDecoration: 'none',
+                  color: isActive ? '#fff' : '#8B4513',
+                  background: isActive ? '#8B4513' : 'transparent'
+                })}
+              >
+                Invoices
+              </NavLink>
+            </li>
+            <li style={{ marginBottom: '0.5rem' }}>
+              <NavLink
+                to="/manager/deliveries"
+                end
+                style={({ isActive }) => ({
+                  display: 'inline-block',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: 4,
+                  textDecoration: 'none',
+                  color: isActive ? '#fff' : '#8B4513',
+                  background: isActive ? '#8B4513' : 'transparent'
+                })}
+              >
+                Deliveries
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/manager/comments"
+                end
+                style={({ isActive }) => ({
+                  display: 'inline-block',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: 4,
+                  textDecoration: 'none',
+                  color: isActive ? '#fff' : '#8B4513',
+                  background: isActive ? '#8B4513' : 'transparent'
+                })}
+              >
+                Comments
               </NavLink>
             </li>
           </ul>
         </nav>
       </aside>
 
-      {/* Content */}
+      {/* Content Area */}
       <main
         style={{
           flex: 1,
@@ -57,10 +127,14 @@ export default function ManagerConsole() {
           {/* /manager → /manager/products */}
           <Route index element={<Navigate to="products" replace />} />
 
-          {/* /manager/products */}
-          <Route path="products" element={<ProductsManager />} />
+          {/* Manager routes */}
+          <Route path="products"   element={<ProductsManager />} />
+          <Route path="categories" element={<CategoriesManager />} />
+          <Route path="invoices"   element={<InvoicesManager />} />
+          <Route path="deliveries" element={<DeliveriesManager />} />
+          <Route path="comments"   element={<CommentsManager />} />
 
-          {/* Not found */}
+          {/* fallback */}
           <Route path="*" element={<h2>❓ Page Not Found</h2>} />
         </Routes>
       </main>
