@@ -40,3 +40,16 @@ export const fetchAllInvoices = () =>
   axios
     .get('/api/v1/product-manager/invoices')
     .then(res => res.data.data.orders)
+
+
+    // src/api/managerService.js
+export const fetchAllDeliveries = () =>
+  axios
+    .get('/api/v1/product-manager/deliveries')
+    .then(res => res.data.data.deliveries)
+
+export const updateDeliveryStatus = (id, status) =>
+  axios
+    .patch(`/api/v1/product-manager/deliveries/${id}/status`, { status })
+    .then(res => res.data.data.delivery)
+    
