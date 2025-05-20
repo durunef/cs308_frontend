@@ -23,6 +23,7 @@ import OrderConfirmation from "./components/OrderConfirmation/OrderConfirmation"
 import OrderHistory from "./components/OrderHistory/OrderHistory";
 import RateProducts from "./components/RateProducts/RateProducts";
 import Wishlist from "./components/Wishlist/Wishlist";
+import SalesManagerDashboard from "./components/salesmanager/salesmanager.jsx";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import ManagerRoute from "./components/ManagerRoute";
@@ -89,6 +90,16 @@ root.render(
                   <ManagerRoute>
                     <ManagerConsole />
                   </ManagerRoute>
+                }
+              />
+
+              {/* Sales Manager Dashboard */}
+              <Route
+                path="/sales"
+                element={
+                  <ProtectedRoute>
+                    <SalesManagerDashboard />
+                  </ProtectedRoute>
                 }
               />
 

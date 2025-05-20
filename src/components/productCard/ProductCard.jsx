@@ -6,7 +6,8 @@ import {
   faCheck, 
   faEye,
   faHeart,
-  faSpinner
+  faSpinner,
+  faTag
 } from '@fortawesome/free-solid-svg-icons';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
@@ -32,6 +33,27 @@ function ProductCard({ product }) {
   const isOutOfStock = stockQuantity <= 0;
   const isInWishlistState = isInWishlist(product._id);
 
+  // Check if product is discounted - updated to match backend schema
+  const hasDiscount = 
+    (product.discount && product.discount > 0) ||
+    (product.discountedPrice && product.discountedPrice < product.price);
+  
+  // Calculate discount percentage
+  let discountPercentage = 0;
+  if (hasDiscount) {
+    if (product.discount) {
+      // If discount percentage is directly available from backend
+      discountPercentage = product.discount;
+    } else if (product.discountedPrice && product.price) {
+      // Calculate from price and discounted price
+      discountPercentage = Math.round(((product.price - product.discountedPrice) / product.price) * 100);
+    }
+  }
+
+  // Get discounted price (either from backend or calculate it)
+  const discountedPrice = product.discountedPrice || 
+    (hasDiscount ? product.price * (1 - product.discount / 100) : null);
+
   // Log stock info for debugging
   console.log('Product Card Stock:', {
     id: product._id,
@@ -39,7 +61,10 @@ function ProductCard({ product }) {
     quantityInStock: product.quantityInStock,
     quantity_in_stocks: product.quantity_in_stocks,
     calculated: stockQuantity,
-    isOutOfStock
+    isOutOfStock,
+    hasDiscount,
+    discountPercentage,
+    discountedPrice
   });
 
   const navigateToProductInfo = () => {
@@ -112,20 +137,32 @@ function ProductCard({ product }) {
   };
 
   return (
-    <div className="product-card" onClick={navigateToProductInfo}>
+    <div className={`product-card ${hasDiscount ? 'discounted' : ''}`} onClick={navigateToProductInfo}>
       <div className="product-card-image-container">
         <img 
           src={product.image ? `${API_URL}${product.image}` : 'https://via.placeholder.com/300x300?text=No+Image'} 
           alt={product.name} 
           className="product-image"
         />
-        <div className="product-card-badge">
+        
+        {/* Stock Badge */}
+        <div className="product-card-badge stock-badge">
           {isOutOfStock ? (
             <span className="out-of-stock-badge">Out of Stock</span>
           ) : (
             <span className="in-stock-badge">In Stock {stockQuantity > 0 && `(${stockQuantity})`}</span>
           )}
         </div>
+        
+        {/* Discount Badge - only show if product has discount */}
+        {hasDiscount && discountPercentage > 0 && (
+          <div className="discount-badge">
+            <FontAwesomeIcon icon={faTag} />
+            <span className="sale-text">SALE</span>
+            <span>{discountPercentage}% OFF</span>
+          </div>
+        )}
+        
         <div className="product-card-overlay">
           <button 
             className="quick-view-button"
@@ -142,7 +179,17 @@ function ProductCard({ product }) {
         <h3 className="product-name">{product.name}</h3>
         
         <div className="product-card-footer">
-          <p className="product-price">${product.price.toFixed(2)}</p>
+          {/* Price Display - show original and discounted price if available */}
+          <div className="product-price-container">
+            {hasDiscount ? (
+              <>
+                <span className="original-price">${product.price.toFixed(2)}</span>
+                <span className="discount-price">${discountedPrice.toFixed(2)}</span>
+              </>
+            ) : (
+              <p className="product-price">${product.price.toFixed(2)}</p>
+            )}
+          </div>
           
           <div className="product-card-actions">
             <button 
