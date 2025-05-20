@@ -1,6 +1,7 @@
 // src/components/manager/AddProductManager.jsx
 import React, { useState, useEffect } from 'react'
 import { fetchAllCategories, createProduct } from '../../api/managerService'
+import './AddProductManager.css'
 
 export default function AddProductManager({ onSuccess }) {
   const [categories, setCategories] = useState([])
@@ -19,6 +20,8 @@ export default function AddProductManager({ onSuccess }) {
     category: ''
   })
   const [error, setError] = useState('')
+  const [imagePreview, setImagePreview] = useState(null)
+  const [selectedImage, setSelectedImage] = useState(null)
 
   // Load categories once
   useEffect(() => {
@@ -30,6 +33,16 @@ export default function AddProductManager({ onSuccess }) {
   const handleChange = e => {
     const { name, value } = e.target
     setForm(f => ({ ...f, [name]: value }))
+  }
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setSelectedImage(file)
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file)
+      setImagePreview(previewUrl)
+    }
   }
 
   const handleSubmit = async e => {
@@ -50,6 +63,11 @@ export default function AddProductManager({ onSuccess }) {
       data.append('subtype', form.subtype)
       data.append('category', form.category)
 
+      // Add image if selected
+      if (selectedImage) {
+        data.append('image', selectedImage)
+      }
+
       await createProduct(data)
 
       // reset form
@@ -67,6 +85,8 @@ export default function AddProductManager({ onSuccess }) {
         subtype: '',
         category: ''
       })
+      setImagePreview(null)
+      setSelectedImage(null)
       onSuccess()
     } catch (err) {
       const msg = err.response?.data?.message || 'Error adding product'
@@ -75,26 +95,26 @@ export default function AddProductManager({ onSuccess }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: 24 }}>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <form onSubmit={handleSubmit} className="add-product-form">
+      {error && <p className="error-message">{error}</p>}
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Name</label><br />
+      <div className="form-group">
+        <label>Name</label>
         <input name="name" value={form.name} onChange={handleChange} required />
       </div>
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Model</label><br />
+      <div className="form-group">
+        <label>Model</label>
         <input name="model" value={form.model} onChange={handleChange} required />
       </div>
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Serial Number</label><br />
+      <div className="form-group">
+        <label>Serial Number</label>
         <input name="serialNumber" value={form.serialNumber} onChange={handleChange} required />
       </div>
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Description</label><br />
+      <div className="form-group">
+        <label>Description</label>
         <textarea
           name="description"
           value={form.description}
@@ -103,8 +123,23 @@ export default function AddProductManager({ onSuccess }) {
         />
       </div>
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Price (₺)</label><br />
+      <div className="form-group">
+        <label>Product Image</label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          className="image-input"
+        />
+        {imagePreview && (
+          <div className="image-preview">
+            <img src={imagePreview} alt="Product preview" />
+          </div>
+        )}
+      </div>
+
+      <div className="form-group">
+        <label>Price (₺)</label>
         <input
           name="price"
           type="number"
@@ -115,8 +150,8 @@ export default function AddProductManager({ onSuccess }) {
         />
       </div>
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Stock</label><br />
+      <div className="form-group">
+        <label>Stock</label>
         <input
           name="quantityInStock"
           type="number"
@@ -126,33 +161,37 @@ export default function AddProductManager({ onSuccess }) {
         />
       </div>
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Currency</label><br />
+      <div className="form-group">
+        <label>Currency</label>
         <input name="currency" value={form.currency} onChange={handleChange} required />
       </div>
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Warranty Status</label><br />
-        <input name="warrantyStatus" value={form.warrantyStatus} onChange={handleChange} />
+      <div className="form-group">
+        <label>Warranty Status</label>
+        <select name="warrantyStatus" value={form.warrantyStatus} onChange={handleChange}>
+          <option value="valid">Valid</option>
+          <option value="expired">Expired</option>
+          <option value="none">None</option>
+        </select>
       </div>
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Distributor Info</label><br />
+      <div className="form-group">
+        <label>Distributor Info</label>
         <input name="distributorInfo" value={form.distributorInfo} onChange={handleChange} />
       </div>
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Type</label><br />
+      <div className="form-group">
+        <label>Type</label>
         <input name="type" value={form.type} onChange={handleChange} />
       </div>
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Subtype</label><br />
+      <div className="form-group">
+        <label>Subtype</label>
         <input name="subtype" value={form.subtype} onChange={handleChange} />
       </div>
 
-      <div style={{ marginBottom: 8 }}>
-        <label>Category</label><br />
+      <div className="form-group">
+        <label>Category</label>
         <select
           name="category"
           value={form.category}
@@ -168,17 +207,7 @@ export default function AddProductManager({ onSuccess }) {
         </select>
       </div>
 
-      <button
-        type="submit"
-        style={{
-          background: '#8B4513',
-          color: '#fff',
-          border: 'none',
-          padding: '8px 16px',
-          borderRadius: 4,
-          cursor: 'pointer'
-        }}
-      >
+      <button type="submit" className="submit-button">
         Add Product
       </button>
     </form>

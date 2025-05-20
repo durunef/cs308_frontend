@@ -17,6 +17,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 import axios from "../../api/axios";
+import { API_URL } from "../../config";
 import "./ProductInfo.css";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
@@ -370,7 +371,7 @@ function ProductInfo() {
           <div className="product-main-image">
             <img 
               src={productWithDefaults.images && productWithDefaults.images.length > 0 
-                ? productWithDefaults.images[selectedImage] 
+                ? `${API_URL}${productWithDefaults.images[selectedImage]}` 
                 : "https://via.placeholder.com/600x400?text=No+Image+Available"} 
               alt={productWithDefaults.name} 
             />
@@ -381,7 +382,7 @@ function ProductInfo() {
               {productWithDefaults.images.map((image, index) => (
                 <img 
                   key={index}
-                  src={image}
+                  src={`${API_URL}${image}`}
                   alt={`${productWithDefaults.name} - view ${index+1}`}
                   className={selectedImage === index ? "active" : ""}
                   onClick={() => setSelectedImage(index)}

@@ -84,6 +84,20 @@ export default function Checkout() {
         // Add slash after 2 digits (MM/YY)
         if (formattedValue.length > 2) {
           formattedValue = formattedValue.substring(0, 2) + '/' + formattedValue.substring(2);
+          
+          // Validate expiry date
+          const [month, year] = formattedValue.split('/');
+          const currentDate = new Date();
+          const currentYear = currentDate.getFullYear() % 100; // Get last 2 digits of year
+          const currentMonth = currentDate.getMonth() + 1; // getMonth() returns 0-11
+          
+          const expiryMonth = parseInt(month);
+          const expiryYear = parseInt(year);
+          
+          if (expiryYear < currentYear || (expiryYear === currentYear && expiryMonth < currentMonth)) {
+            setError('Card expiry date is invalid. Please enter a future date.');
+            return;
+          }
         }
       }
       

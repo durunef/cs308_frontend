@@ -12,6 +12,7 @@ import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
+import { API_URL } from '../../config';
 import './ProductCard.css';
 
 function ProductCard({ product }) {
@@ -114,7 +115,7 @@ function ProductCard({ product }) {
     <div className="product-card" onClick={navigateToProductInfo}>
       <div className="product-card-image-container">
         <img 
-          src={product.image || 'https://via.placeholder.com/300x300?text=No+Image'} 
+          src={product.image ? `${API_URL}${product.image}` : 'https://via.placeholder.com/300x300?text=No+Image'} 
           alt={product.name} 
           className="product-image"
         />

@@ -31,6 +31,7 @@ function OrderHistory() {
   const [refreshingStatus, setRefreshingStatus] = useState(false);
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [cancellingOrder, setCancellingOrder] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [refundRequests, setRefundRequests] = useState(() => {
     // Load refund requests from localStorage on component mount
     const savedRefunds = localStorage.getItem('refundRequests');
@@ -98,11 +99,16 @@ function OrderHistory() {
             return order;
           });
           
-          setOrders(enhancedOrders);
+          // Sort orders by date in descending order (most recent first)
+          const sortedOrders = enhancedOrders.sort((a, b) => 
+            new Date(b.createdAt) - new Date(a.createdAt)
+          );
+          
+          setOrders(sortedOrders);
           
           // After loading orders, fetch their status
-          if (enhancedOrders.length > 0) {
-            fetchOrderStatuses(enhancedOrders);
+          if (sortedOrders.length > 0) {
+            fetchOrderStatuses(sortedOrders);
           }
         } else {
           throw new Error('Failed to fetch order history');
@@ -310,6 +316,14 @@ function OrderHistory() {
     });
   };
   
+  // Filter orders based on search query
+  const filteredOrders = orders.filter(order => {
+    if (!searchQuery) return true;
+    return order.items.some(item => 
+      item.product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
+  
   if (loading) {
     return (
       <div className="order-history-container">
@@ -341,6 +355,15 @@ function OrderHistory() {
       <div className="order-history-header">
         <h1>Order History</h1>
         <div className="header-actions">
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder="Search by product name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+          </div>
           <button 
             onClick={refreshOrderStatuses} 
             className="refresh-status-button"
@@ -365,7 +388,7 @@ function OrderHistory() {
         </div>
       ) : (
         <div className="orders-list">
-          {orders.map(order => (
+          {filteredOrders.map(order => (
             <div key={order._id} className="order-card">
               <div 
                 className="order-card-header"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faCheckCircle, 
@@ -21,10 +21,12 @@ import './OrderConfirmation.css';
 import axios from 'axios';
 import ProductReview from '../ProductReview/ProductReview';
 import RefundRequest from '../RefundRequest/RefundRequest';
+import { API_URL } from '../../config';
 
 function OrderConfirmation() {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
+  const { navigate } = useNavigate();
   const [orderStatus, setOrderStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -743,7 +745,7 @@ function OrderConfirmation() {
             <div key={index} className="order-item-with-review">
               <div className="order-item">
                 <img 
-                  src={item.product.image} 
+                  src={item.product.image ? `${API_URL}${item.product.image}` : 'https://via.placeholder.com/100x100?text=Product'} 
                   alt={item.product.name} 
                   className="order-item-image" 
                   onError={(e) => {

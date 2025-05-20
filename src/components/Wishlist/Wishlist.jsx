@@ -12,6 +12,7 @@ import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
+import { API_URL } from '../../config';
 import './Wishlist.css';
 
 // Memoized WishlistItem component
@@ -28,7 +29,7 @@ const WishlistItem = memo(({ item, onRemove, onToggleNotification, onAddToCart, 
     <div className="wishlist-item">
       <div className="wishlist-item-image">
         <img 
-          src={product.image || 'https://via.placeholder.com/150x150?text=No+Image'} 
+          src={product.image ? `${API_URL}${product.image}` : 'https://via.placeholder.com/150x150?text=No+Image'} 
           alt={product.name || 'Product'} 
           onClick={() => onProductClick(product._id)}
           style={{ cursor: 'pointer' }}
