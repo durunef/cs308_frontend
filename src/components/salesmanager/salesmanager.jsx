@@ -286,13 +286,20 @@ function SalesManagerPanel() {
         if (revenueResponse.data && revenueResponse.data.data && revenueResponse.data.data.report) {
           const revenueData = revenueResponse.data.data.report;
           
-          // Update labels and revenue data
-          labels = revenueData.map(item => {
-            const date = new Date(item.date);
-            return date.toLocaleString('default', { month: 'short' });
-          });
-          
-          revenue = revenueData.map(item => item.revenue);
+          if (revenueData.length > 0) {
+            // Update labels and revenue data
+            labels = revenueData.map(item => {
+              const date = new Date(item.date);
+              return date.toLocaleString('default', { month: 'short' });
+            });
+            
+            revenue = revenueData.map(item => item.revenue);
+            console.log("Processed revenue data:", { labels, revenue });
+          } else {
+            console.log("Revenue data array is empty");
+          }
+        } else {
+          console.log("Revenue data not in expected format:", revenueResponse.data);
         }
       } catch (revenueError) {
         console.error("Error fetching revenue data:", revenueError);
@@ -307,8 +314,15 @@ function SalesManagerPanel() {
         if (profitResponse.data && profitResponse.data.data && profitResponse.data.data.report) {
           const profitData = profitResponse.data.data.report;
           
-          // Update profit data
-          profit = profitData.map(item => item.profit);
+          if (profitData.length > 0) {
+            // Update profit data
+            profit = profitData.map(item => item.profit);
+            console.log("Processed profit data:", profit);
+          } else {
+            console.log("Profit data array is empty");
+          }
+        } else {
+          console.log("Profit data not in expected format:", profitResponse.data);
         }
       } catch (profitError) {
         console.error("Error fetching profit data:", profitError);
@@ -526,6 +540,30 @@ function SalesManagerPanel() {
     );
   };
 
+  // Calculate max value for scaling the charts
+  const calculateMaxValue = (dataArray) => {
+    if (!dataArray || dataArray.length === 0) return 100;
+    const max = Math.max(...dataArray);
+    return max > 0 ? max : 100;
+  };
+
+  // Get bar height as percentage of maximum value (for responsive height)
+  const getBarHeight = (value, maxValue) => {
+    if (maxValue <= 0) return 0;
+    // Calculate as percentage of maximum with scaling factor to fit the container
+    // Minimum height of 1px for visibility of small values
+    return Math.max(1, (value / maxValue) * 200);  // Scale up to 200px max height
+  };
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+    }).format(amount);
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -577,6 +615,10 @@ function SalesManagerPanel() {
       </div>
     );
   }
+
+  // Calculate max values for chart scaling
+  const maxRevenueValue = calculateMaxValue(salesData.revenue);
+  const maxProfitValue = calculateMaxValue(salesData.profit);
 
   return (
     <div className="sales-panel-container">
@@ -824,21 +866,41 @@ function SalesManagerPanel() {
               </h2>
             </div>
             <div className="card-body">
-              <div className="chart-placeholder">
-                {salesData.revenue && salesData.revenue.map((value, index) => (
-                  <div 
-                    key={`revenue-${index}`}
-                    className="chart-bar" 
-                    style={{ 
-                      height: `${value / 20}px`, 
-                      backgroundColor: '#007bff' 
-                    }}>
+              {salesData.revenue && salesData.revenue.length > 0 ? (
+                <div>
+                  <div className="chart-container" style={{ height: '250px', position: 'relative' }}>
+                    <div className="chart-y-axis">
+                      <div className="y-axis-label">{formatCurrency(maxRevenueValue)}</div>
+                      <div className="y-axis-label">{formatCurrency(maxRevenueValue * 0.75)}</div>
+                      <div className="y-axis-label">{formatCurrency(maxRevenueValue * 0.5)}</div>
+                      <div className="y-axis-label">{formatCurrency(maxRevenueValue * 0.25)}</div>
+                      <div className="y-axis-label">$0</div>
+                    </div>
+                    <div className="chart-bars-container">
+                      {salesData.revenue.map((value, index) => (
+                        <div key={`revenue-bar-${index}`} className="chart-bar-wrapper">
+                          <div 
+                            className="chart-bar" 
+                            style={{ 
+                              height: `${getBarHeight(value, maxRevenueValue)}px`,
+                              backgroundColor: '#007bff' 
+                            }}
+                            title={`${salesData.labels[index]}: ${formatCurrency(value)}`}
+                          >
+                            <div className="bar-value">{formatCurrency(value)}</div>
+                          </div>
+                          <div className="bar-label">{salesData.labels[index]}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-              <div className="chart-legend">
-                <span>Revenue Data {salesData.labels && salesData.labels.length > 0 ? `(${salesData.labels[0]} - ${salesData.labels[salesData.labels.length - 1]})` : ''}</span>
-              </div>
+                  <div className="chart-legend">
+                    <span>Revenue Data ({salesData.labels[0]} - {salesData.labels[salesData.labels.length - 1]})</span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-center">No revenue data available for the selected date range</p>
+              )}
             </div>
           </div>
         </div>
@@ -852,25 +914,115 @@ function SalesManagerPanel() {
               </h2>
             </div>
             <div className="card-body">
-              <div className="chart-placeholder">
-                {salesData.profit && salesData.profit.map((value, index) => (
-                  <div 
-                    key={`profit-${index}`}
-                    className="chart-bar" 
-                    style={{ 
-                      height: `${value / 20}px`, 
-                      backgroundColor: '#28a745' 
-                    }}>
+              {salesData.profit && salesData.profit.length > 0 ? (
+                <div>
+                  <div className="chart-container" style={{ height: '250px', position: 'relative' }}>
+                    <div className="chart-y-axis">
+                      <div className="y-axis-label">{formatCurrency(maxProfitValue)}</div>
+                      <div className="y-axis-label">{formatCurrency(maxProfitValue * 0.75)}</div>
+                      <div className="y-axis-label">{formatCurrency(maxProfitValue * 0.5)}</div>
+                      <div className="y-axis-label">{formatCurrency(maxProfitValue * 0.25)}</div>
+                      <div className="y-axis-label">$0</div>
+                    </div>
+                    <div className="chart-bars-container">
+                      {salesData.profit.map((value, index) => (
+                        <div key={`profit-bar-${index}`} className="chart-bar-wrapper">
+                          <div 
+                            className="chart-bar" 
+                            style={{ 
+                              height: `${getBarHeight(value, maxProfitValue)}px`,
+                              backgroundColor: '#28a745' 
+                            }}
+                            title={`${salesData.labels[index]}: ${formatCurrency(value)}`}
+                          >
+                            <div className="bar-value">{formatCurrency(value)}</div>
+                          </div>
+                          <div className="bar-label">{salesData.labels[index]}</div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-              <div className="chart-legend">
-                <span>Profit Data {salesData.labels && salesData.labels.length > 0 ? `(${salesData.labels[0]} - ${salesData.labels[salesData.labels.length - 1]})` : ''}</span>
-              </div>
+                  <div className="chart-legend">
+                    <span>Profit Data ({salesData.labels[0]} - {salesData.labels[salesData.labels.length - 1]})</span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-center">No profit data available for the selected date range</p>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Add some CSS for the charts */}
+      <style jsx="true">{`
+        .chart-container {
+          display: flex;
+          align-items: flex-end;
+          width: 100%;
+          padding-left: 50px;
+          border-bottom: 1px solid #ddd;
+          margin-bottom: 10px;
+        }
+        .chart-y-axis {
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 50px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 5px 0;
+        }
+        .y-axis-label {
+          font-size: 10px;
+          color: #666;
+          text-align: right;
+          padding-right: 5px;
+        }
+        .chart-bars-container {
+          display: flex;
+          justify-content: space-around;
+          align-items: flex-end;
+          width: 100%;
+          height: 100%;
+        }
+        .chart-bar-wrapper {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          flex: 1;
+          max-width: 60px;
+        }
+        .chart-bar {
+          width: 30px;
+          min-height: 1px;
+          border-radius: 3px 3px 0 0;
+          position: relative;
+          transition: height 0.5s ease;
+        }
+        .bar-value {
+          position: absolute;
+          top: -20px;
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 10px;
+          white-space: nowrap;
+          color: #333;
+        }
+        .bar-label {
+          margin-top: 5px;
+          font-size: 12px;
+          text-align: center;
+        }
+        .chart-legend {
+          text-align: center;
+          margin-top: 10px;
+          font-size: 14px;
+          color: #666;
+        }
+      `}</style>
     </div>
   );
 }
