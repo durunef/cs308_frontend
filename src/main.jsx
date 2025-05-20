@@ -18,12 +18,10 @@ import ProductInfo from "./components/productInfo/ProductInfo";
 import Profile from "./components/Profile/Profile";
 import Cart from "./components/Cart/Cart";
 import CategoryPage from "./components/categoryPage/CategoryPage";
-import ProductForm from "./components/productForm/ProductForm";
 import Checkout from "./components/Checkout/Checkout";
 import OrderConfirmation from "./components/OrderConfirmation/OrderConfirmation";
 import OrderHistory from "./components/OrderHistory/OrderHistory";
 import RateProducts from "./components/RateProducts/RateProducts";
-import ReviewApproval from "./components/ReviewApproval/ReviewApproval";
 import Wishlist from "./components/Wishlist/Wishlist";
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -47,15 +45,6 @@ root.render(
               <Route path="/product/:productId" element={<ProductInfo />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/category/:categoryId" element={<CategoryPage />} />
-
-              <Route
-                path="/add-product"
-                element={
-                  <ProtectedRoute>
-                    <ProductForm />
-                  </ProtectedRoute>
-                }
-              />
 
               <Route
                 path="/checkout"
@@ -89,15 +78,6 @@ root.render(
                 element={
                   <ProtectedRoute>
                     <RateProducts />
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/review-approval"
-                element={
-                  <ProtectedRoute>
-                    <ReviewApproval />
                   </ProtectedRoute>
                 }
               />

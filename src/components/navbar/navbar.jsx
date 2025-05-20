@@ -77,12 +77,6 @@ function Navbar() {
                 <FontAwesomeIcon icon={faUser} className="icon-margin-right" />
                 Profile
               </Link>
-              <Link to="/add-product" className="nav-link hover-effect">
-                Add Product
-              </Link>
-              <Link to="/review-approval" className="nav-link hover-effect">
-                Review Approve
-              </Link>
               {user.role === "product-manager" && (
                 <Link to="/manager" className="nav-link hover-effect">
                   <FontAwesomeIcon icon={faCheckSquare} className="icon-margin-right" />
@@ -140,20 +134,6 @@ function Navbar() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Profile
-                </Link>
-                <Link
-                  to="/add-product"
-                  className="mobile-nav-link"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Add Product
-                </Link>
-                <Link
-                  to="/review-approval"
-                  className="mobile-nav-link"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Review Approve
                 </Link>
                 {user.role === "product-manager" && (
                   <Link
