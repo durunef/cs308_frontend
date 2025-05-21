@@ -119,6 +119,9 @@ function ProductsPage() {
   useEffect(() => {
     let result = [...allProducts];
     
+    // Filter out products without prices
+    result = result.filter(p => p.price !== null && p.price !== undefined);
+    
     // Apply filters
     if (filterValues.type) {
       result = result.filter(p => p.type === filterValues.type);

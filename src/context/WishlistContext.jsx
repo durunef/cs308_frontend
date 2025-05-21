@@ -135,10 +135,11 @@ export function WishlistProvider({ children }) {
         }
       );
       
-      if (response.status === 204) {
+      if (response.status === 200 && response.data.status === 'success') {
+        // Update the wishlist items with the response data
         setWishlistItems(prev => prev.map(item => 
           item.productId === productId 
-            ? { ...item, notifyOnDiscount }
+            ? { ...item, notifyOnDiscount: response.data.data.wishlistItem.notifyOnDiscount }
             : item
         ));
         return { success: true };

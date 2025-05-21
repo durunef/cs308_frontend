@@ -10,7 +10,6 @@ export default function AddProductManager({ onSuccess }) {
     model: '',
     serialNumber: '',
     description: '',
-    price: '',
     quantityInStock: '',
     currency: '₺',
     warrantyStatus: '',
@@ -54,7 +53,6 @@ export default function AddProductManager({ onSuccess }) {
       data.append('model', form.model)
       data.append('serialNumber', form.serialNumber)
       data.append('description', form.description)
-      data.append('price', form.price)
       data.append('quantityInStock', form.quantityInStock)
       data.append('currency', form.currency)
       data.append('warrantyStatus', form.warrantyStatus)
@@ -62,6 +60,9 @@ export default function AddProductManager({ onSuccess }) {
       data.append('type', form.type)
       data.append('subtype', form.subtype)
       data.append('category', form.category)
+      data.append('published', 'false') // Ensure product is not published initially
+      data.append('price', '') // Explicitly set price to empty
+      data.append('cost', '') // Explicitly set cost to empty
 
       // Add image if selected
       if (selectedImage) {
@@ -76,7 +77,6 @@ export default function AddProductManager({ onSuccess }) {
         model: '',
         serialNumber: '',
         description: '',
-        price: '',
         quantityInStock: '',
         currency: '₺',
         warrantyStatus: '',
@@ -136,18 +136,6 @@ export default function AddProductManager({ onSuccess }) {
             <img src={imagePreview} alt="Product preview" />
           </div>
         )}
-      </div>
-
-      <div className="form-group">
-        <label>Price (₺)</label>
-        <input
-          name="price"
-          type="number"
-          step="0.01"
-          value={form.price}
-          onChange={handleChange}
-          required
-        />
       </div>
 
       <div className="form-group">

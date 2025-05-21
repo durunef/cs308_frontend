@@ -10,7 +10,8 @@ import {
   faTimes,
   faHeart,
   faCheckSquare,
-  faChartLine
+  faChartLine,
+  faBell
 } from "@fortawesome/free-solid-svg-icons";
 
 import { useAuth } from "../../context/AuthContext";
@@ -70,6 +71,10 @@ function Navbar() {
 
           {isAuthenticated ? (
             <>
+              <Link to="/notifications" className="nav-link hover-effect">
+                <FontAwesomeIcon icon={faBell} className="icon-margin-right" />
+                Notifications
+              </Link>
               <Link to="/wishlist" className="nav-link hover-effect">
                 <FontAwesomeIcon icon={faHeart} className="icon-margin-right" />
                 Wishlist
@@ -84,10 +89,12 @@ function Navbar() {
                   Manager Console
                 </Link>
               )}
-              <Link to="/sales" className="nav-link hover-effect">
+              {user.role === "sales-manager" && (
+                <Link to="/sales-manager" className="nav-link hover-effect">
                   <FontAwesomeIcon icon={faChartLine} className="icon-margin-right" />
                   Sales Dashboard
                 </Link>
+              )}
               <button onClick={handleLogout} className="nav-link hover-effect">
                 <FontAwesomeIcon icon={faSignOutAlt} className="icon-margin-right" />
                 Logout
@@ -127,6 +134,14 @@ function Navbar() {
             {isAuthenticated ? (
               <>
                 <Link
+                  to="/notifications"
+                  className="mobile-nav-link"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <FontAwesomeIcon icon={faBell} className="icon-margin-right" />
+                  Notifications
+                </Link>
+                <Link
                   to="/wishlist"
                   className="mobile-nav-link"
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -149,17 +164,19 @@ function Navbar() {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <FontAwesomeIcon icon={faCheckSquare} className="icon-margin-right" />
-                    Manager Console
+                    Product Manager Dashboard
                   </Link>
                 )}
-                <Link
-                    to="/sales"
+                {user.role === "sales-manager" && (
+                  <Link
+                    to="/sales-manager"
                     className="mobile-nav-link"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <FontAwesomeIcon icon={faChartLine} className="icon-margin-right" />
-                    Sales Dashboard
+                    Sales Manager Dashboard
                   </Link>
+                )}
                 <button
                   className="mobile-nav-link mobile-logout"
                   onClick={() => {

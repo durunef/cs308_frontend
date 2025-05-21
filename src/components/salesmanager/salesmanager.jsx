@@ -19,6 +19,7 @@ import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import "./salesmanager.css";
+import { toast } from "react-hot-toast";
 
 // Define the API base URL - adjust this based on your backend setup
 // The "/api" prefix must match how your backend routes are mounted
@@ -70,6 +71,8 @@ function SalesManagerPanel() {
   const [allProducts, setAllProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState("");
   const [price, setPrice] = useState("");
+  const [selectedExistingProduct, setSelectedExistingProduct] = useState("");
+  const [newPrice, setNewPrice] = useState("");
   const [discountProduct, setDiscountProduct] = useState("");
   const [discountPercent, setDiscountPercent] = useState("");
   const [startDate, setStartDate] = useState("2024-01-01");
@@ -87,6 +90,7 @@ function SalesManagerPanel() {
 
   // Separate alert states for each section
   const [priceAlert, setPriceAlert] = useState({ show: false, text: "", type: "" });
+  const [existingPriceAlert, setExistingPriceAlert] = useState({ show: false, text: "", type: "" });
   const [discountAlert, setDiscountAlert] = useState({ show: false, text: "", type: "" });
   const [refundAlert, setRefundAlert] = useState({ show: false, text: "", type: "" });
   const [dateFilterAlert, setDateFilterAlert] = useState({ show: false, text: "", type: "" });
@@ -224,8 +228,8 @@ function SalesManagerPanel() {
         throw new Error("Products data is not an array");
       }
       
-      // Filter products without a price or with price set to 0
-      const unpublished = products.filter(p => !p.price || p.price === 0);
+      // Filter products without a price or with price set to null
+      const unpublished = products.filter(p => p.price === null || p.price === undefined);
       console.log("Unpublished products:", unpublished);
       setUnpublishedProducts(unpublished);
     } catch (error) {
@@ -259,23 +263,16 @@ function SalesManagerPanel() {
   // Fetch invoices with date filtering from backend
   const fetchInvoices = async () => {
     try {
-      console.log(`Fetching invoices from ${startDate} to ${endDate}`);
-      
-      const response = await axiosInstance.get(`/sales/invoices?start=${startDate}&end=${endDate}`);
-      console.log("Invoices API Response:", response.data);
-      
-      if (response.data && response.data.data && response.data.data.invoices) {
-        const invoicesData = response.data.data.invoices;
-        console.log("Processed invoices data:", invoicesData);
-        setInvoices(invoicesData);
-      } else {
-        console.log("No invoices found or unexpected data structure:", response.data);
-        setInvoices([]);
-      }
+      const response = await axiosInstance.get('/sales/invoices', {
+        params: {
+          start: startDate,
+          end: endDate
+        }
+      });
+      setInvoices(response.data.data.invoices);
     } catch (error) {
-      console.error("Error fetching invoices:", error);
-      showAlert("Failed to fetch invoices", "danger", "invoice");
-      setInvoices([]);
+      console.error('Error fetching invoices:', error);
+      toast.error('Failed to fetch invoices');
     }
   };
 
@@ -291,7 +288,12 @@ function SalesManagerPanel() {
       
       // Get revenue data from API
       try {
-        const revenueResponse = await axiosInstance.get(`/sales/reports/revenue?start=${startDate}&end=${endDate}`);
+        const revenueResponse = await axiosInstance.get('/sales/revenue', {
+          params: {
+            start: startDate,
+            end: endDate
+          }
+        });
         console.log("Revenue response:", revenueResponse.data);
         
         if (revenueResponse.data && revenueResponse.data.data && revenueResponse.data.data.report) {
@@ -326,7 +328,12 @@ function SalesManagerPanel() {
       
       // Get profit data from API
       try {
-        const profitResponse = await axiosInstance.get(`/sales/reports/profit?start=${startDate}&end=${endDate}`);
+        const profitResponse = await axiosInstance.get('/sales/profit', {
+          params: {
+            start: startDate,
+            end: endDate
+          }
+        });
         console.log("Profit response:", profitResponse.data);
         
         if (profitResponse.data && profitResponse.data.data && profitResponse.data.data.report) {
@@ -363,7 +370,7 @@ function SalesManagerPanel() {
     }
   };
 
-  // Handle setting price for a product
+  // Handle setting price for a new product
   const handleSetPrice = async (e) => {
     e.preventDefault();
     
@@ -376,11 +383,12 @@ function SalesManagerPanel() {
       console.log(`Setting price ${price} for product ${selectedProduct}`);
       
       const response = await axiosInstance.patch(`/sales/price/${selectedProduct}`, {
-        price: parseFloat(price)
+        price: parseFloat(price),
+        published: true // Set published to true when price is set
       });
       
       console.log("Price set successfully:", response.data);
-      showAlert("Price set successfully!", "success", "price");
+      showAlert("Price set successfully! Product is now visible to customers.", "success", "price");
       await fetchAllProducts();
       await fetchUnpublishedProducts();
       
@@ -389,6 +397,34 @@ function SalesManagerPanel() {
     } catch (error) {
       console.error("Error setting price:", error);
       showAlert(`Failed to set price: ${error.response?.data?.message || error.message}`, "danger", "price");
+    }
+  };
+
+  // Handle updating price for an existing product
+  const handleUpdatePrice = async (e) => {
+    e.preventDefault();
+    
+    if (!selectedExistingProduct || !newPrice || isNaN(parseFloat(newPrice)) || parseFloat(newPrice) < 0) {
+      showAlert("Please select a product and enter a valid price", "danger", "existingPrice");
+      return;
+    }
+
+    try {
+      console.log(`Updating price to ${newPrice} for product ${selectedExistingProduct}`);
+      
+      const response = await axiosInstance.patch(`/sales/price/${selectedExistingProduct}`, {
+        price: parseFloat(newPrice)
+      });
+      
+      console.log("Price updated successfully:", response.data);
+      showAlert("Price updated successfully!", "success", "existingPrice");
+      await fetchAllProducts();
+      
+      setSelectedExistingProduct("");
+      setNewPrice("");
+    } catch (error) {
+      console.error("Error updating price:", error);
+      showAlert(`Failed to update price: ${error.response?.data?.message || error.message}`, "danger", "existingPrice");
     }
   };
 
@@ -418,9 +454,22 @@ function SalesManagerPanel() {
       const discountAmount = (originalPrice * discountValue) / 100;
       const discountedPrice = originalPrice - discountAmount;
       
+      // First apply the discount
       const response = await axiosInstance.patch(`/sales/price/${discountProduct}`, {
         price: Number(discountedPrice.toFixed(2))
       });
+      
+      // Then notify wishlist users
+      try {
+        await axiosInstance.post(`/sales/discount/${discountProduct}`, {
+          discountPercent: discountValue,
+          originalPrice: originalPrice,
+          newPrice: discountedPrice
+        });
+      } catch (notifyError) {
+        console.error("Error notifying wishlist users:", notifyError);
+        // Continue even if notification fails
+      }
       
       console.log("Discount response:", response.data);
       showAlert(`Discount of ${discountValue}% applied successfully!`, "success", "discount");
@@ -590,6 +639,7 @@ function SalesManagerPanel() {
   const showAlert = (text, type, section) => {
     const alertSetter = {
       'price': setPriceAlert,
+      'existingPrice': setExistingPriceAlert,
       'discount': setDiscountAlert,
       'refund': setRefundAlert,
       'dateFilter': setDateFilterAlert,
@@ -796,100 +846,155 @@ function SalesManagerPanel() {
       
       {/* Product Management Section */}
       <div className="product-panels">
-        {/* Unpublished Products */}
-        <div className="product-panel">
-          <div className="card">
-            <div className="card-header">
-              <h2>
-                <FontAwesomeIcon icon={faBox} className="me-2" /> 
-                Set Price for New Products
-              </h2>
+        {/* First Row */}
+        <div className="product-panel-row">
+          {/* Unpublished Products */}
+          <div className="product-panel">
+            <div className="card">
+              <div className="card-header">
+                <h2>
+                  <FontAwesomeIcon icon={faBox} className="me-2" /> 
+                  Set Price for New Products
+                </h2>
+              </div>
+              <div className="card-body">
+                {priceAlert.show && (
+                  <div className={`alert alert-${priceAlert.type} mb-3`}>
+                    {priceAlert.text}
+                  </div>
+                )}
+                <form onSubmit={handleSetPrice}>
+                  <div className="mb-3">
+                    <label className="form-label">Select Product</label>
+                    <select
+                      className="form-control"
+                      value={selectedProduct}
+                      onChange={(e) => setSelectedProduct(e.target.value)}
+                    >
+                      <option value="">Choose a product</option>
+                      {unpublishedProducts.map(product => (
+                        <option key={product._id} value={product._id}>
+                          {product.name} ({product.model || 'No Model'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Set Price</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      min="0"
+                      step="0.01"
+                      placeholder="Enter price"
+                    />
+                  </div>
+                  <button type="submit" className="btn btn-primary">Set Price</button>
+                </form>
+              </div>
             </div>
-            <div className="card-body">
-              {priceAlert.show && (
-                <div className={`alert alert-${priceAlert.type} mb-3`}>
-                  {priceAlert.text}
-                </div>
-              )}
-              <form onSubmit={handleSetPrice}>
-                <div className="mb-3">
-                  <label className="form-label">Select Product</label>
-                  <select
-                    className="form-control"
-                    value={selectedProduct}
-                    onChange={(e) => setSelectedProduct(e.target.value)}
-                  >
-                    <option value="">Choose a product</option>
-                    {unpublishedProducts.map(product => (
-                      <option key={product._id} value={product._id}>
-                        {product.name} ({product.model || 'No Model'})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Set Price</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    min="0"
-                    step="0.01"
-                    placeholder="Enter price"
-                  />
-                </div>
-                <button type="submit" className="btn btn-primary">Set Price</button>
-              </form>
+          </div>
+
+          {/* Existing Products Price Update */}
+          <div className="product-panel">
+            <div className="card">
+              <div className="card-header">
+                <h2>
+                  <FontAwesomeIcon icon={faBox} className="me-2" /> 
+                  Update Existing Product Prices
+                </h2>
+              </div>
+              <div className="card-body">
+                {existingPriceAlert.show && (
+                  <div className={`alert alert-${existingPriceAlert.type} mb-3`}>
+                    {existingPriceAlert.text}
+                  </div>
+                )}
+                <form onSubmit={handleUpdatePrice}>
+                  <div className="mb-3">
+                    <label className="form-label">Select Product</label>
+                    <select
+                      className="form-control"
+                      value={selectedExistingProduct}
+                      onChange={(e) => setSelectedExistingProduct(e.target.value)}
+                    >
+                      <option value="">Choose a product</option>
+                      {allProducts.filter(p => p.price !== null && p.price !== undefined).map(product => (
+                        <option key={product._id} value={product._id}>
+                          {product.name} ({product.model || 'No Model'}) - Current: ${product.price.toFixed(2)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">New Price</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={newPrice}
+                      onChange={(e) => setNewPrice(e.target.value)}
+                      min="0"
+                      step="0.01"
+                      placeholder="Enter new price"
+                    />
+                  </div>
+                  <button type="submit" className="btn btn-primary">Update Price</button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
-        
-        {/* Apply Discount */}
-        <div className="product-panel">
-          <div className="card">
-            <div className="card-header">
-              <h2>
-                <FontAwesomeIcon icon={faPercent} className="me-2" /> 
-                Apply Discount
-              </h2>
-            </div>
-            <div className="card-body">
-              {discountAlert.show && (
-                <div className={`alert alert-${discountAlert.type} mb-3`}>
-                  {discountAlert.text}
-                </div>
-              )}
-              <form onSubmit={handleSetDiscount}>
-                <div className="mb-3">
-                  <label className="form-label">Select Product</label>
-                  <select
-                    className="form-control"
-                    value={discountProduct}
-                    onChange={(e) => setDiscountProduct(e.target.value)}
-                  >
-                    <option value="">Choose a product</option>
-                    {allProducts.map(product => (
-                      <option key={product._id} value={product._id}>
-                        {product.name} ({product.model || 'No Model'}) - ${product.price ? product.price.toFixed(2) : '0.00'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Discount Percentage (%)</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={discountPercent}
-                    onChange={(e) => setDiscountPercent(e.target.value)}
-                    min="0"
-                    max="100"
-                    placeholder="Enter percentage (0-100)"
-                  />
-                </div>
-                <button type="submit" className="btn btn-success">Apply Discount</button>
-              </form>
+
+        {/* Second Row */}
+        <div className="product-panel-row">
+          {/* Apply Discount */}
+          <div className="product-panel">
+            <div className="card">
+              <div className="card-header">
+                <h2>
+                  <FontAwesomeIcon icon={faPercent} className="me-2" /> 
+                  Apply Discount
+                </h2>
+              </div>
+              <div className="card-body">
+                {discountAlert.show && (
+                  <div className={`alert alert-${discountAlert.type} mb-3`}>
+                    {discountAlert.text}
+                  </div>
+                )}
+                <form onSubmit={handleSetDiscount}>
+                  <div className="mb-3">
+                    <label className="form-label">Select Product</label>
+                    <select
+                      className="form-control"
+                      value={discountProduct}
+                      onChange={(e) => setDiscountProduct(e.target.value)}
+                    >
+                      <option value="">Choose a product</option>
+                      {allProducts.map(product => (
+                        <option key={product._id} value={product._id}>
+                          {product.name} ({product.model || 'No Model'}) - ${product.price ? product.price.toFixed(2) : '0.00'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label">Discount Percentage (%)</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={discountPercent}
+                      onChange={(e) => setDiscountPercent(e.target.value)}
+                      min="0"
+                      max="100"
+                      placeholder="Enter percentage (0-100)"
+                    />
+                  </div>
+                  <button type="submit" className="btn btn-success">Apply Discount</button>
+                </form>
+              </div>
             </div>
           </div>
         </div>

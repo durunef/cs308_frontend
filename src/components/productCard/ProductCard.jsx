@@ -181,13 +181,15 @@ function ProductCard({ product }) {
         <div className="product-card-footer">
           {/* Price Display - show original and discounted price if available */}
           <div className="product-price-container">
-            {hasDiscount ? (
+            {hasDiscount && product.price ? (
               <>
                 <span className="original-price">${product.price.toFixed(2)}</span>
                 <span className="discount-price">${discountedPrice.toFixed(2)}</span>
               </>
-            ) : (
+            ) : product.price ? (
               <p className="product-price">${product.price.toFixed(2)}</p>
+            ) : (
+              <p className="product-price">Price not set</p>
             )}
           </div>
           

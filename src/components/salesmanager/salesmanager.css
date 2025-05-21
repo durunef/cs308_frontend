@@ -103,10 +103,10 @@ h2 {
   background: var(--panel-background);
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin: 0 auto 24px auto;
+  margin: 0;
   border: none;
   overflow: hidden;
-  width: 100%;
+  height: 100%;
 }
 
 .card-header {
@@ -434,17 +434,33 @@ input[type="date"].form-control {
   text-decoration: none;
 }
 
-/* Product management panels */
+/* Product Panels Layout */
 .product-panels {
   display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+  flex-direction: column;
+  gap: 24px;
   margin-bottom: 30px;
+}
+
+.product-panel-row {
+  display: flex;
+  gap: 24px;
+  width: 100%;
 }
 
 .product-panel {
   flex: 1;
-  min-width: 300px;
+  min-width: 0; /* Prevents flex items from overflowing */
+}
+
+@media (max-width: 992px) {
+  .product-panel-row {
+    flex-direction: column;
+  }
+  
+  .product-panel {
+    width: 100%;
+  }
 }
 
 /* Utilities */

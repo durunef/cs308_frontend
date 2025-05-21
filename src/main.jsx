@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from 'react-hot-toast'
 
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
@@ -24,6 +25,7 @@ import OrderHistory from "./components/OrderHistory/OrderHistory";
 import RateProducts from "./components/RateProducts/RateProducts";
 import Wishlist from "./components/Wishlist/Wishlist";
 import SalesManagerDashboard from "./components/salesmanager/salesmanager.jsx";
+import Notifications from "./components/Notifications/Notifications";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import ManagerRoute from "./components/ManagerRoute";
@@ -37,6 +39,7 @@ root.render(
       <AuthProvider>
         <CartProvider>
           <WishlistProvider>
+            <Toaster position="top-right" />
             <ToastContainer />
             <Navbar />
             <Routes>
@@ -83,6 +86,15 @@ root.render(
                 }
               />
 
+              <Route
+                path="/notifications"
+                element={
+                  <ProtectedRoute>
+                    <Notifications />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Manager area */}
               <Route
                 path="/manager/*"
@@ -95,7 +107,7 @@ root.render(
 
               {/* Sales Manager Dashboard */}
               <Route
-                path="/sales"
+                path="/sales-manager"
                 element={
                   <ProtectedRoute>
                     <SalesManagerDashboard />

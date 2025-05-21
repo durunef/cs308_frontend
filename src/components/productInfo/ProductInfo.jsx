@@ -49,50 +49,36 @@ function ProductInfo() {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        console.log(`Fetching product with ID: ${productId}`);
-        const response = await axios.get(`/api/products/${productId}`);
-        console.log('Product API response:', response);
+        const response = await axios.get(`${API_URL}/products/${productId}`);
+        const productData = response.data.data.product;
         
-        // Check if we received valid JSON data
-        if (response.data && typeof response.data === 'object') {
-          // Extract product data based on the actual structure
-          let productData;
-          
-          if (response.data.status === 'success' && response.data.data && response.data.data.product) {
-            productData = response.data.data.product;
-          } else if (response.data.product) {
-            productData = response.data.product;
-          } else {
-            productData = response.data;
-          }
-          
-          console.log('Extracted product data:', productData);
-          setProduct(productData);
-          
-          // Initialize with the first image if available
-          if (productData.images && productData.images.length > 0) {
-            setSelectedImage(0);
-          } else if (productData.image) {
-            // Handle case where there's a single image instead of an array
-            productData.images = [productData.image];
-          }
-        } else {
-          setError("Failed to load product data: Invalid response format");
+        // Check if product is published and has a price
+        if (!productData.published || productData.price === null) {
+          setError("This product is not available for purchase.");
+          setProduct(null);
+          return;
         }
-      } catch (err) {
-        console.error("Error fetching product:", err);
-        setError("Error loading product: " + (err.response?.data?.message || err.message));
+        
+        setProduct(productData);
+        
+        // Fetch reviews if product exists
+        if (productData) {
+          try {
+            const reviewsResponse = await axios.get(`${API_URL}/products/${productId}/reviews`);
+            setReviews(reviewsResponse.data.data.reviews || []);
+          } catch (reviewError) {
+            console.error("Error fetching reviews:", reviewError);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error);
+        setError(error.response?.data?.message || "Failed to load product details");
       } finally {
         setLoading(false);
       }
     };
-    
-    if (productId) {
-      fetchProduct();
-    } else {
-      setError("No product ID provided");
-      setLoading(false);
-    }
+
+    fetchProduct();
   }, [productId]);
   
   // Fetch reviews
