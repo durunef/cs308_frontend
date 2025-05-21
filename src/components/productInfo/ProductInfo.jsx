@@ -44,93 +44,46 @@ function ProductInfo() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [usernames, setUsernames] = useState({});
   
-  // Fetch product data
+  // Fetch product data and reviews
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchProductAndReviews = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${API_URL}/products/${productId}`);
+        setError(null);
+        const response = await axios.get(`/api/products/${productId}`);
         const productData = response.data.data.product;
         
-        // Check if product is published and has a price
-        if (!productData.published || productData.price === null) {
-          setError("This product is not available for purchase.");
-          setProduct(null);
-          return;
-        }
-        
         setProduct(productData);
-        
+
         // Fetch reviews if product exists
-        if (productData) {
-          try {
-            const reviewsResponse = await axios.get(`${API_URL}/products/${productId}/reviews`);
-            setReviews(reviewsResponse.data.data.reviews || []);
-          } catch (reviewError) {
+        try {
+          const reviewsResponse = await axios.get(`/api/products/${productId}/reviews`);
+          // Only show approved reviews
+          const reviewsData = (reviewsResponse.data.data.reviews || []).filter(r => r.approved === true);
+          setReviews(reviewsData);
+        } catch (reviewError) {
+          if (reviewError.response?.status === 404) {
+            setReviews([]);
+          } else {
             console.error("Error fetching reviews:", reviewError);
+            setReviews([]);
           }
         }
       } catch (error) {
-        console.error("Error fetching product:", error);
-        setError(error.response?.data?.message || "Failed to load product details");
+        console.error("Error response:", error.response);
+        if (error.response?.status === 404) {
+          setError(error.response?.data?.message || "Product not found or not available.");
+        } else {
+          setError(error.response?.data?.message || "Failed to load product details");
+        }
+        setProduct(null);
+        setReviews([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProduct();
-  }, [productId]);
-  
-  // Fetch reviews
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        console.log(`Fetching reviews for product: ${productId}`);
-        const response = await axios.get(`/api/products/${productId}/reviews`);
-        console.log('Reviews API response:', response);
-        
-        // Adapt to the actual response structure
-        if (response.data && typeof response.data === 'object' && !response.data.includes) {
-          // Extract reviews from the response structure as shown in the example
-          let reviewsData = [];
-          
-          if (response.data.status === "success" && response.data.data && response.data.data.reviews) {
-            reviewsData = response.data.data.reviews;
-          } else if (Array.isArray(response.data)) {
-            reviewsData = response.data;
-          } else if (response.data.data && Array.isArray(response.data.data)) {
-            reviewsData = response.data.data;
-          } else if (response.data.reviews && Array.isArray(response.data.reviews)) {
-            reviewsData = response.data.reviews;
-          }
-          
-          // Only show approved reviews
-          reviewsData = reviewsData.filter(review => review.approved === true);
-          
-          console.log('Extracted reviews data:', reviewsData);
-          setReviews(reviewsData);
-          
-          // Fetch usernames for each unique user ID
-          const userIds = [...new Set(reviewsData
-            .map(review => typeof review.user === 'string' ? review.user : review.user?._id)
-            .filter(Boolean))];
-            
-          if (userIds.length > 0) {
-            fetchUsernames(userIds);
-          }
-        } else {
-          console.warn('Received HTML instead of JSON for reviews.');
-          setReviews([]);
-        }
-      } catch (err) {
-        console.error("Error fetching reviews:", err);
-        setReviews([]);
-      }
-    };
-    
-    if (productId) {
-      fetchReviews();
-    }
+    fetchProductAndReviews();
   }, [productId, reviewSubmitted]);
   
   // Fetch usernames for user IDs
@@ -140,12 +93,10 @@ function ProductInfo() {
     const usernameMap = {};
     
     try {
-      // Process each user ID one by one
       for (const userId of userIds) {
         try {
           console.log(`Fetching username for user ID: ${userId}`);
-          // Call the public user endpoint without auth header
-          const response = await axios.get(`/api/users/${userId}`);
+          const response = await axios.get(`/api/user/${userId}`);
           
           if (response.data && response.data.status === 'success') {
             usernameMap[userId] = response.data.data.name || 'User';
@@ -172,7 +123,7 @@ function ProductInfo() {
       if (!user) return;
       
       try {
-        const response = await axios.get(`/api/users/${user.id}/purchased-products`);
+        const response = await axios.get(`${API_URL}/user/${user.id}/purchased-products`);
         
         if (response.data.status === "success") {
           const hasBought = response.data.data.some(p => p.productId === productId);

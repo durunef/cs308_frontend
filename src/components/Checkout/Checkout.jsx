@@ -9,7 +9,7 @@ import './Checkout.css';
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { cartItems, getCartTotalPrice, clearCart } = useCart();
+  const { cartItems, getCartTotalPrice, clearCart: clearCartFunction } = useCart();
   const { isAuthenticated, token } = useAuth();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
@@ -136,6 +136,7 @@ export default function Checkout() {
     }
     
     try {
+      console.log('Processing payment...');
       const pay = await processPayment();
       if (!pay.success) {
         setError('Payment failed.');
@@ -143,9 +144,13 @@ export default function Checkout() {
         return;
       }
       
+      console.log('Payment successful, proceeding with checkout...');
       const resp = await doCheckout({
         paymentDetails: {
-          ...form,
+          cardName: form.cardName,
+          cardNumber: form.cardNumber,
+          expiryDate: form.expiryDate,
+          cvv: form.cvv,
           transactionId: pay.transactionId
         },
         shippingDetails: {
@@ -155,14 +160,45 @@ export default function Checkout() {
           city: form.city,
           postalCode: form.postalCode
         },
-        cartItems
+        cartItems: cartItems.map(item => ({
+          product: item.product._id,
+          quantity: item.quantity,
+          priceAtPurchase: item.product.price,
+          costAtPurchase: item.product.price // Use price as cost if not available
+        }))
       });
       
-      setInvoiceUrl(`http://localhost:3000${resp.data.invoiceUrl}`);
-      setMessage('Your order has been successfully placed! Your invoice is shown below and has been sent to your email.');
-      clearCart();
+      console.log('Full checkout response:', resp);
+
+      try {
+        // Clear cart first
+        if (typeof clearCartFunction === 'function') {
+          await clearCartFunction();
+          console.log('Cart cleared successfully');
+        } else {
+          console.warn('clearCart function not available');
+        }
+      } catch (clearError) {
+        console.error('Error clearing cart:', clearError);
+      }
+
+      // Check response structure - data.order contains the order details
+      const orderId = resp?.data?.data?.order?._id;
+      console.log('Extracted order ID:', orderId);
+
+      if (orderId) {
+        console.log('Navigating to order confirmation:', `/order-confirmation/${orderId}`);
+        // Force navigation using window.location
+        window.location.href = `/order-confirmation/${orderId}`;
+      } else {
+        console.error('No order ID found in response:', resp);
+        // Fallback to showing invoice in current page
+        setInvoiceUrl(resp.data?.data?.invoiceUrl);
+        setMessage('Your order has been successfully placed! Your invoice is shown below and has been sent to your email.');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Order processing error.');
+      console.error('Checkout error:', err);
+      setError(err.response?.data?.message || err.message || 'Order processing error.');
     } finally {
       setIsProcessing(false);
     }

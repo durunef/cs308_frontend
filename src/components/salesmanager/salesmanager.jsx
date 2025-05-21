@@ -79,6 +79,7 @@ function SalesManagerPanel() {
   const [endDate, setEndDate] = useState("2027-01-01");
   const [invoices, setInvoices] = useState([]);
   const [refundRequests, setRefundRequests] = useState([]);
+  const [isRefundsLoading, setIsRefundsLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -241,8 +242,9 @@ function SalesManagerPanel() {
   // Fetch refund requests from API
   const fetchRefundRequests = async () => {
     try {
+      setIsRefundsLoading(true);
       console.log("Fetching refund requests from API");
-      const response = await axiosInstance.get("/sales/refunds");
+      const response = await axiosInstance.get("/sales/refunds/pending");
       console.log("Refund requests response:", response.data);
       
       if (response.data && response.data.data && response.data.data.refunds) {
@@ -257,6 +259,8 @@ function SalesManagerPanel() {
       console.error("Error fetching refund requests:", error);
       showAlert("Failed to fetch refund requests", "danger", "refund");
       setRefundRequests([]);
+    } finally {
+      setIsRefundsLoading(false);
     }
   };
 
@@ -1016,7 +1020,12 @@ function SalesManagerPanel() {
                   {refundAlert.text}
                 </div>
               )}
-              {refundRequests.length === 0 ? (
+              {isRefundsLoading ? (
+                <div className="text-center py-4">
+                  <FontAwesomeIcon icon={faSpinner} spin size="2x" className="mb-2" />
+                  <p>Loading refund requests...</p>
+                </div>
+              ) : refundRequests.length === 0 ? (
                 <p className="text-center">No pending refund requests</p>
               ) : (
                 <table className="table">

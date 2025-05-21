@@ -63,8 +63,14 @@ export default function DeliveriesManager() {
             }}>
             <p><strong>Delivery ID:</strong> {d._id}</p>
             <p><strong>Customer:</strong> {d.user?.name || 'Unknown'}</p>
-            <p><strong>Product:</strong> {d.items?.[0]?.product?.name || 'Unknown'}</p>
-            <p><strong>Quantity:</strong> {d.items?.[0]?.quantity || '–'}</p>
+            <p>
+              <strong>Product:</strong>{' '}
+              {d.items?.map(item => item.product?.name || 'Unknown').join(', ') || 'Unknown'}
+            </p>
+            <p>
+              <strong>Quantities:</strong>{' '}
+              {d.items?.map(item => `${item.quantity}`).join(', ') || '–'}
+            </p>
             <p><strong>Total:</strong> {d.total.toFixed(2)} ₺</p>
             <p>
               <strong>Address:</strong>{' '}

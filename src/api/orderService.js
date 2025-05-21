@@ -6,12 +6,33 @@ import axios from './axios';
  * { status:'success', data:{ order, invoiceUrl } } döner
  */
 export const checkout = async ({ paymentDetails, shippingDetails, cartItems }) => {
-  const response = await axios.post('/api/orders/checkout', {
-    payment: paymentDetails,
-    shipping: shippingDetails,
-    cart: cartItems
-  });
-  return response.data; // { status:'success', data:{ order, invoiceUrl } }
+  try {
+    console.log('Starting checkout process...');
+    console.log('Cart items:', cartItems);
+    
+    const response = await axios.post('/api/orders/checkout', {
+      payment: paymentDetails,
+      shipping: shippingDetails,
+      cart: cartItems
+    });
+
+    console.log('Raw checkout response:', response);
+    console.log('Checkout response data:', response.data);
+
+    if (!response.data || !response.data.data) {
+      console.error('Invalid checkout response format:', response.data);
+      throw new Error('Invalid response from server during checkout');
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('Checkout error details:', error.response || error);
+    throw new Error(
+      error.response?.data?.message || 
+      error.message || 
+      'Failed to process checkout. Please try again.'
+    );
+  }
 };
 
 /**
@@ -19,8 +40,26 @@ export const checkout = async ({ paymentDetails, shippingDetails, cartItems }) =
  * Dönen yapı: { status:'success', data: [order1, order2, …] }
  */
 export const getOrderHistory = async () => {
-  const response = await axios.get('/api/orders');
-  return response.data;
+  try {
+    console.log('Fetching order history...');
+    const response = await axios.get('/api/orders');
+    console.log('Order history response:', response.data);
+    
+    if (!response.data || !response.data.data) {
+      console.error('Invalid response format:', response.data);
+      throw new Error('Invalid response format from server');
+    }
+    
+    // Return the orders array from the response data
+    return response.data.data;
+  } catch (error) {
+    console.error('Error in getOrderHistory:', error.response || error);
+    throw new Error(
+      error.response?.data?.message || 
+      error.message || 
+      'Failed to fetch order history'
+    );
+  }
 };
 
 /**
@@ -208,6 +247,19 @@ export const requestRefund = async (orderId, items) => {
  * @returns {Promise<Object>} The response data containing the refund status
  */
 export const getRefundStatus = async (refundId) => {
-  const response = await axios.get(`/api/orders/refund/${refundId}`);
-  return response.data;
+  try {
+    console.log('Fetching refund status for:', refundId);
+    const response = await axios.get(`/api/sales/refunds/${refundId}`);
+    console.log('Refund status response:', response.data);
+    
+    if (!response.data || !response.data.data) {
+      console.error('Invalid refund status response:', response.data);
+      throw new Error('Invalid refund status response format');
+    }
+    
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching refund status:', error.response || error);
+    throw error;
+  }
 };

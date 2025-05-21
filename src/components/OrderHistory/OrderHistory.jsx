@@ -17,7 +17,7 @@ import {
   faUndo
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../context/AuthContext';
-import { getOrderHistory, downloadInvoice, getOrderStatus, cancelOrder } from '../../api/orderService';
+import { getOrderHistory, downloadInvoice, getOrderStatus, cancelOrder, getRefundStatus } from '../../api/orderService';
 import RefundRequest from '../RefundRequest/RefundRequest';
 import './OrderHistory.css';
 
@@ -32,11 +32,7 @@ function OrderHistory() {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [cancellingOrder, setCancellingOrder] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [refundRequests, setRefundRequests] = useState(() => {
-    // Load refund requests from localStorage on component mount
-    const savedRefunds = localStorage.getItem('refundRequests');
-    return savedRefunds ? JSON.parse(savedRefunds) : {};
-  });
+  const [refundRequests, setRefundRequests] = useState({});
   
   // Check if component is being rendered inside profile page
   const isInsideProfile = location.pathname.includes('/profile');
@@ -48,16 +44,112 @@ function OrderHistory() {
     }
   }, [isAuthenticated, navigate, isInsideProfile]);
   
+  // Fetch refund status for an order
+  const fetchRefundStatus = async (refundId) => {
+    try {
+      console.log('Fetching refund status for order with refundId:', refundId);
+      const refundData = await getRefundStatus(refundId);
+      console.log('Received refund data:', refundData);
+      
+      if (refundData && refundData.refund) {
+        setRefundRequests(prev => ({
+          ...prev,
+          [refundData.refund.order]: refundData.refund
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching refund status:', error);
+      // Don't throw the error, just log it and continue
+    }
+  };
+
+  // Fetch orders and their refund statuses
+  const fetchOrdersAndRefunds = async () => {
+    try {
+      setLoading(true);
+      const ordersResponse = await getOrderHistory();
+      
+      // Ensure ordersResponse is an array
+      if (!Array.isArray(ordersResponse)) {
+        console.error('Expected array of orders but got:', ordersResponse);
+        setError('Failed to load orders. Invalid response format.');
+        setOrders([]);
+        return;
+      }
+
+      setOrders(ordersResponse);
+
+      // Fetch refund status for each order that has a refund request
+      console.log('Checking orders for refund requests:', ordersResponse);
+      const refundPromises = ordersResponse
+        .filter(order => order && order.refundId) // Add null check
+        .map(async (order) => {
+          console.log('Found order with refundId:', order.refundId);
+          await fetchRefundStatus(order.refundId);
+        });
+
+      await Promise.all(refundPromises);
+      
+      // Log the final state of refund requests
+      console.log('Final refund requests state:', refundRequests);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      setError('Failed to load orders. Please try again later.');
+      setOrders([]); // Set empty array to prevent filter errors
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchOrdersAndRefunds();
+    }
+  }, [isAuthenticated]);
+
+  // Refresh refund status periodically
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    const refreshRefunds = async () => {
+      const ordersWithRefunds = orders.filter(order => order.refundId);
+      console.log('Orders with refund requests:', ordersWithRefunds);
+      
+      for (const order of ordersWithRefunds) {
+        await fetchRefundStatus(order.refundId);
+      }
+    };
+
+    // Initial check
+    refreshRefunds();
+
+    // Set up interval for periodic checks
+    const intervalId = setInterval(refreshRefunds, 30000); // Check every 30 seconds
+
+    return () => clearInterval(intervalId);
+  }, [isAuthenticated, orders]);
+  
   // Fetch order history
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         setLoading(true);
-        const response = await getOrderHistory();
+        setError(null);
+        console.log('Starting to fetch orders...');
         
-        if (response.status === 'success') {
-          // Ensure we have proper data structure for each order
-          const enhancedOrders = response.data.map(order => {
+        const response = await getOrderHistory();
+        console.log('Received orders:', response);
+        
+        if (!Array.isArray(response)) {
+          throw new Error('Invalid response format: expected an array of orders');
+        }
+        
+        // Ensure we have proper data structure for each order
+        const enhancedOrders = response.map(order => {
+          if (!order) return null;
+          
+          try {
             // Add orderNumber if missing
             if (!order.orderNumber) {
               order.orderNumber = `ORD-${order._id.substring(0, 8)}`;
@@ -66,7 +158,7 @@ function OrderHistory() {
             // Calculate subtotal if missing
             if (!order.subtotal && order.items && order.items.length > 0) {
               order.subtotal = order.items.reduce((sum, item) => {
-                return sum + (item.priceAtPurchase || item.product.price) * item.quantity;
+                return sum + (item.priceAtPurchase || item.product?.price || 0) * (item.quantity || 0);
               }, 0);
             }
             
@@ -86,36 +178,30 @@ function OrderHistory() {
               const tax = order.tax || 0;
               const shipping = order.shippingCost || 0;
               order.total = subtotal + tax + shipping;
-              console.log(`Calculated total for order ${order._id}: ${order.total}`);
-            }
-            
-            // Always verify total is correct (in case components changed)
-            const calculatedTotal = (order.subtotal || 0) + (order.tax || 0) + (order.shippingCost || 0);
-            if (Math.abs(calculatedTotal - order.total) > 0.01) { // Allow for tiny floating point differences
-              console.log(`Correcting total for order ${order._id}: ${order.total} -> ${calculatedTotal}`);
-              order.total = calculatedTotal;
             }
             
             return order;
-          });
-          
-          // Sort orders by date in descending order (most recent first)
-          const sortedOrders = enhancedOrders.sort((a, b) => 
-            new Date(b.createdAt) - new Date(a.createdAt)
-          );
-          
-          setOrders(sortedOrders);
-          
-          // After loading orders, fetch their status
-          if (sortedOrders.length > 0) {
-            fetchOrderStatuses(sortedOrders);
+          } catch (err) {
+            console.error('Error processing order:', err, order);
+            return null;
           }
-        } else {
-          throw new Error('Failed to fetch order history');
+        }).filter(Boolean); // Remove any null orders
+        
+        // Sort orders by date in descending order (most recent first)
+        const sortedOrders = enhancedOrders.sort((a, b) => 
+          new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        
+        setOrders(sortedOrders);
+        
+        // After loading orders, fetch their status
+        if (sortedOrders.length > 0) {
+          fetchOrderStatuses(sortedOrders);
         }
       } catch (err) {
         console.error('Error fetching orders:', err);
-        setError('We could not load your order history. Please try again later.');
+        setError(err.message || 'We could not load your order history. Please try again later.');
+        setOrders([]); // Set empty array to prevent filter errors
       } finally {
         setLoading(false);
       }
@@ -301,21 +387,6 @@ function OrderHistory() {
     }
   };
 
-  // Save refund requests to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('refundRequests', JSON.stringify(refundRequests));
-  }, [refundRequests]);
-
-  const handleRefundRequested = (refund) => {
-    setRefundRequests(prev => {
-      const updated = {
-        ...prev,
-        [refund.order]: refund
-      };
-      return updated;
-    });
-  };
-  
   // Filter orders based on search query
   const filteredOrders = orders.filter(order => {
     if (!searchQuery) return true;
@@ -469,7 +540,7 @@ function OrderHistory() {
                     {order.status === 'delivered' && !refundRequests[order._id] && (
                       <RefundRequest 
                         order={order} 
-                        onRefundRequested={handleRefundRequested}
+                        onRefundRequested={fetchRefundStatus}
                       />
                     )}
                   </div>

@@ -25,7 +25,9 @@ export default function CommentsManager() {
       } else {
         await rejectReview(id)
       }
-      setReviews(rs => rs.filter(r => r._id !== id))
+      // Fetch fresh data after approval/rejection
+      const updatedReviews = await fetchAllReviews()
+      setReviews(updatedReviews)
     } catch {
       alert('Could not update review.')
     }
