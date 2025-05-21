@@ -169,6 +169,7 @@ export default function Checkout() {
       });
       
       console.log('Full checkout response:', resp);
+      console.log('Response data structure:', JSON.stringify(resp.data, null, 2));
 
       try {
         // Clear cart first
@@ -182,8 +183,10 @@ export default function Checkout() {
         console.error('Error clearing cart:', clearError);
       }
 
-      // Check response structure - data.order contains the order details
-      const orderId = resp?.data?.data?.order?._id;
+      // Extract order ID from the response - order is in resp.data.data.order
+      const orderData = resp?.data?.data?.order;
+      console.log('Order object:', orderData);
+      const orderId = orderData?._id;
       console.log('Extracted order ID:', orderId);
 
       if (orderId) {
