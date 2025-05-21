@@ -76,7 +76,6 @@ function SalesManagerPanel() {
   const [endDate, setEndDate] = useState("2027-01-01");
   const [invoices, setInvoices] = useState([]);
   const [refundRequests, setRefundRequests] = useState([]);
-  const [alertMessage, setAlertMessage] = useState({ show: false, text: "", type: "" });
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -85,6 +84,13 @@ function SalesManagerPanel() {
     revenue: [],
     profit: []
   });
+
+  // Separate alert states for each section
+  const [priceAlert, setPriceAlert] = useState({ show: false, text: "", type: "" });
+  const [discountAlert, setDiscountAlert] = useState({ show: false, text: "", type: "" });
+  const [refundAlert, setRefundAlert] = useState({ show: false, text: "", type: "" });
+  const [dateFilterAlert, setDateFilterAlert] = useState({ show: false, text: "", type: "" });
+  const [invoiceAlert, setInvoiceAlert] = useState({ show: false, text: "", type: "" });
   
   // Setup axios with auth header
   useEffect(() => {
@@ -116,7 +122,7 @@ function SalesManagerPanel() {
           console.log("Products fetched successfully");
         } catch (error) {
           console.error("Error fetching products:", error);
-          showAlert("Failed to fetch products.", "danger");
+          showAlert("Failed to fetch products.", "danger", "price");
         }
         
         try {
@@ -124,16 +130,15 @@ function SalesManagerPanel() {
           console.log("Unpublished products fetched successfully");
         } catch (error) {
           console.error("Error fetching unpublished products:", error);
-          showAlert("Failed to fetch unpublished products.", "danger");
+          showAlert("Failed to fetch unpublished products.", "danger", "price");
         }
         
         try {
-          // For refund requests, we continue to use mock data
           await fetchRefundRequests();
-          console.log("Mock refund requests loaded successfully");
+          console.log("Refund requests fetched successfully");
         } catch (error) {
-          console.error("Error loading refund request mock data:", error);
-          showAlert("Failed to load refund request data.", "danger");
+          console.error("Error fetching refund requests:", error);
+          showAlert("Failed to fetch refund requests", "danger", "refund");
         }
         
         try {
@@ -141,7 +146,7 @@ function SalesManagerPanel() {
           console.log("Invoices fetched successfully");
         } catch (error) {
           console.error("Error fetching invoices:", error);
-          showAlert("Failed to fetch invoices.", "danger");
+          showAlert("Failed to fetch invoices.", "danger", "invoice");
         }
         
         try {
@@ -149,7 +154,7 @@ function SalesManagerPanel() {
           console.log("Sales data fetched successfully");
         } catch (error) {
           console.error("Error fetching sales data:", error);
-          showAlert("Failed to fetch sales data.", "danger");
+          showAlert("Failed to fetch sales data.", "danger", "dateFilter");
         }
         
         setIsLoading(false);
@@ -157,7 +162,7 @@ function SalesManagerPanel() {
         console.error("Error in initial data loading:", error);
         setHasError(true);
         setErrorMessage("Failed to load data. Please try refreshing the page.");
-        showAlert("Failed to load data", "danger");
+        showAlert("Failed to load data", "danger", "dateFilter");
         setIsLoading(false);
       }
     };
@@ -229,15 +234,24 @@ function SalesManagerPanel() {
     }
   };
 
-  // For refund requests, we'll use mock data as per requirements
+  // Fetch refund requests from API
   const fetchRefundRequests = async () => {
     try {
-      console.log("Using mock data for refund requests (as specified)");
-      // Using sample data as specified
-      const mockRefundRequests = getSampleRefundRequests();
-      setRefundRequests(mockRefundRequests);
+      console.log("Fetching refund requests from API");
+      const response = await axiosInstance.get("/sales/refunds");
+      console.log("Refund requests response:", response.data);
+      
+      if (response.data && response.data.data && response.data.data.refunds) {
+        const refundsData = response.data.data.refunds;
+        console.log("Processed refunds data:", refundsData);
+        setRefundRequests(refundsData);
+      } else {
+        console.log("No refund requests found or unexpected data structure:", response.data);
+        setRefundRequests([]);
+      }
     } catch (error) {
-      console.error("Error with mock refund data:", error);
+      console.error("Error fetching refund requests:", error);
+      showAlert("Failed to fetch refund requests", "danger", "refund");
       setRefundRequests([]);
     }
   };
@@ -248,23 +262,20 @@ function SalesManagerPanel() {
       console.log(`Fetching invoices from ${startDate} to ${endDate}`);
       
       const response = await axiosInstance.get(`/sales/invoices?start=${startDate}&end=${endDate}`);
+      console.log("Invoices API Response:", response.data);
       
-      let invoicesData;
       if (response.data && response.data.data && response.data.data.invoices) {
-        invoicesData = response.data.data.invoices;
-      } else if (response.data && response.data.data) {
-        invoicesData = response.data.data;
-      } else if (Array.isArray(response.data)) {
-        invoicesData = response.data;
+        const invoicesData = response.data.data.invoices;
+        console.log("Processed invoices data:", invoicesData);
+        setInvoices(invoicesData);
       } else {
-        invoicesData = [];
+        console.log("No invoices found or unexpected data structure:", response.data);
+        setInvoices([]);
       }
-      
-      console.log("Invoices fetched successfully:", invoicesData);
-      setInvoices(invoicesData);
     } catch (error) {
       console.error("Error fetching invoices:", error);
-      throw error;
+      showAlert("Failed to fetch invoices", "danger", "invoice");
+      setInvoices([]);
     }
   };
 
@@ -287,22 +298,29 @@ function SalesManagerPanel() {
           const revenueData = revenueResponse.data.data.report;
           
           if (revenueData.length > 0) {
-            // Update labels and revenue data
+            // Update labels and revenue data with full date format
             labels = revenueData.map(item => {
               const date = new Date(item.date);
-              return date.toLocaleString('default', { month: 'short' });
+              return date.toLocaleDateString('en-US', { 
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              });
             });
             
             revenue = revenueData.map(item => item.revenue);
             console.log("Processed revenue data:", { labels, revenue });
           } else {
             console.log("Revenue data array is empty");
+            showAlert("No revenue data available for the selected date range", "info", "dateFilter");
           }
         } else {
           console.log("Revenue data not in expected format:", revenueResponse.data);
+          showAlert("Revenue data format is incorrect", "warning", "dateFilter");
         }
       } catch (revenueError) {
         console.error("Error fetching revenue data:", revenueError);
+        showAlert("Failed to fetch revenue data", "danger", "dateFilter");
         throw revenueError;
       }
       
@@ -320,12 +338,15 @@ function SalesManagerPanel() {
             console.log("Processed profit data:", profit);
           } else {
             console.log("Profit data array is empty");
+            showAlert("No profit data available for the selected date range", "info", "dateFilter");
           }
         } else {
           console.log("Profit data not in expected format:", profitResponse.data);
+          showAlert("Profit data format is incorrect", "warning", "dateFilter");
         }
       } catch (profitError) {
         console.error("Error fetching profit data:", profitError);
+        showAlert("Failed to fetch profit data", "danger", "dateFilter");
         throw profitError;
       }
       
@@ -337,6 +358,7 @@ function SalesManagerPanel() {
       });
     } catch (error) {
       console.error("Error fetching sales data:", error);
+      showAlert("Failed to fetch sales data", "danger", "dateFilter");
       throw error;
     }
   };
@@ -346,7 +368,7 @@ function SalesManagerPanel() {
     e.preventDefault();
     
     if (!selectedProduct || !price || isNaN(parseFloat(price)) || parseFloat(price) < 0) {
-      showAlert("Please select a product and enter a valid price", "danger");
+      showAlert("Please select a product and enter a valid price", "danger", "price");
       return;
     }
 
@@ -358,16 +380,15 @@ function SalesManagerPanel() {
       });
       
       console.log("Price set successfully:", response.data);
-      showAlert("Price set successfully!", "success");
-      await fetchAllProducts(); // Refresh products list
-      await fetchUnpublishedProducts(); // Refresh unpublished products list
+      showAlert("Price set successfully!", "success", "price");
+      await fetchAllProducts();
+      await fetchUnpublishedProducts();
       
-      // Reset form
       setSelectedProduct("");
       setPrice("");
     } catch (error) {
       console.error("Error setting price:", error);
-      showAlert(`Failed to set price: ${error.response?.data?.message || error.message}`, "danger");
+      showAlert(`Failed to set price: ${error.response?.data?.message || error.message}`, "danger", "price");
     }
   };
 
@@ -379,7 +400,7 @@ function SalesManagerPanel() {
         isNaN(parseFloat(discountPercent)) || 
         parseFloat(discountPercent) < 0 || 
         parseFloat(discountPercent) > 100) {
-      showAlert("Please select a product and enter a valid discount percentage (0-100)", "danger");
+      showAlert("Please select a product and enter a valid discount percentage (0-100)", "danger", "discount");
       return;
     }
 
@@ -387,38 +408,28 @@ function SalesManagerPanel() {
       const discountValue = parseFloat(discountPercent);
       console.log(`Setting discount ${discountValue}% for product ${discountProduct}`);
       
-      // Find the current product to get its original price
       const product = allProducts.find(p => p._id === discountProduct);
       if (!product || !product.price) {
-        showAlert("Product price information not available", "danger");
+        showAlert("Product price information not available", "danger", "discount");
         return;
       }
       
-      // Calculate the discounted price instead of sending percentage
-      // This fixes the 400 error by matching what the API expects
       const originalPrice = product.price;
       const discountAmount = (originalPrice * discountValue) / 100;
       const discountedPrice = originalPrice - discountAmount;
       
-      console.log(`Original price: ${originalPrice}, Discount: ${discountValue}%, New price: ${discountedPrice}`);
-      
-      // Send the new discounted price to the API instead of percentage
       const response = await axiosInstance.patch(`/sales/price/${discountProduct}`, {
-        price: Number(discountedPrice.toFixed(2)) // Round to 2 decimal places and convert to number
+        price: Number(discountedPrice.toFixed(2))
       });
       
       console.log("Discount response:", response.data);
-      showAlert(`Discount of ${discountValue}% applied successfully!`, "success");
-      await fetchAllProducts(); // Refresh products list
+      showAlert(`Discount of ${discountValue}% applied successfully!`, "success", "discount");
+      await fetchAllProducts();
       
-      // Reset form
       setDiscountProduct("");
       setDiscountPercent("");
     } catch (error) {
       console.error("Error setting discount:", error);
-      console.error("Error response:", error.response?.data);
-      
-      // More detailed error message
       let errorMsg = "Failed to apply discount";
       if (error.response?.data?.message) {
         errorMsg += `: ${error.response.data.message}`;
@@ -426,62 +437,115 @@ function SalesManagerPanel() {
         errorMsg += `: ${error.message}`;
       }
       
-      showAlert(errorMsg, "danger");
+      showAlert(errorMsg, "danger", "discount");
     }
   };
 
-  // Handle authorizing a refund (using mock data)
+  // Handle authorizing a refund
   const handleAuthorizeRefund = async (refundId) => {
     try {
       console.log(`Authorizing refund ${refundId}`);
       
-      // Since we're using mock data for refunds (as specified)
-      // Simply remove the authorized refund from the list
-      setRefundRequests(prev => prev.filter(refund => refund._id !== refundId));
-      showAlert("Refund authorized successfully!", "success");
+      const response = await axiosInstance.patch(`/sales/refunds/${refundId}/approve`);
+      console.log("Refund approval response:", response.data);
+      
+      if (response.data && response.data.status === "success") {
+        showAlert("Refund authorized successfully!", "success", "refund");
+        await fetchRefundRequests();
+      } else {
+        throw new Error("Failed to authorize refund");
+      }
     } catch (error) {
       console.error("Error authorizing refund:", error);
-      showAlert("Failed to authorize refund", "danger");
+      showAlert(`Failed to authorize refund: ${error.response?.data?.message || error.message}`, "danger", "refund");
     }
   };
 
-  // Handle rejecting a refund (using mock data)
+  // Handle rejecting a refund
   const handleRejectRefund = async (refundId) => {
     try {
       console.log(`Rejecting refund ${refundId}`);
       
-      // Since we're using mock data for refunds (as specified)
-      // Simply remove the rejected refund from the list
-      setRefundRequests(prev => prev.filter(refund => refund._id !== refundId));
-      showAlert("Refund rejected successfully!", "success");
+      const response = await axiosInstance.patch(`/sales/refunds/${refundId}/reject`);
+      console.log("Refund rejection response:", response.data);
+      
+      if (response.data && response.data.status === "success") {
+        showAlert("Refund rejected successfully!", "success", "refund");
+        await fetchRefundRequests();
+      } else {
+        throw new Error("Failed to reject refund");
+      }
     } catch (error) {
       console.error("Error rejecting refund:", error);
-      showAlert("Failed to reject refund", "danger");
+      showAlert(`Failed to reject refund: ${error.response?.data?.message || error.message}`, "danger", "refund");
     }
   };
 
   // Download invoice function
-  const downloadInvoice = async (invoiceId) => {
+  const downloadInvoice = async (invoiceUrl) => {
     try {
-      console.log(`Downloading invoice ${invoiceId}`);
+      console.log(`Original invoice URL: ${invoiceUrl}`);
       
-      const response = await axiosInstance.get(`/sales/invoices/${invoiceId}/download`, {
-        responseType: 'blob'
+      // Extract the order ID from the invoice URL
+      const orderId = invoiceUrl.split('/').pop().replace('invoice-', '').replace('.pdf', '');
+      console.log("Extracted order ID:", orderId);
+      
+      // Use the correct endpoint format
+      const fullUrl = `${API_URL}/sales/invoices/${orderId}/download`;
+      console.log("Attempting to download from:", fullUrl);
+      
+      // Make a GET request to download the PDF
+      const response = await axiosInstance.get(fullUrl, {
+        responseType: 'blob',
+        headers: {
+          'Accept': 'application/pdf'
+        }
       });
       
+      if (response.status !== 200) {
+        throw new Error(`Failed to download invoice: ${response.status} ${response.statusText}`);
+      }
+      
+      // Create a blob from the PDF data
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      
       // Create a download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `invoice-${invoiceId}.pdf`);
+      
+      // Use the order ID for the filename
+      link.setAttribute('download', `invoice-${orderId}.pdf`);
+      
+      // Append to body, click and remove
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
-      showAlert("Invoice downloaded successfully", "success");
+      // Clean up the URL object
+      window.URL.revokeObjectURL(url);
+      
+      showAlert("Invoice downloaded successfully", "success", "invoice");
     } catch (error) {
       console.error("Error downloading invoice:", error);
-      showAlert("Failed to download invoice", "danger");
+      let errorMessage = "Failed to download invoice. ";
+      
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        errorMessage += `Server responded with ${error.response.status}: ${error.response.statusText}`;
+        console.error("Server response:", error.response.data);
+      } else if (error.request) {
+        // The request was made but no response was received
+        errorMessage += "No response received from server.";
+        console.error("No response received:", error.request);
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        errorMessage += error.message;
+        console.error("Request setup error:", error);
+      }
+      
+      showAlert(errorMessage, "danger", "invoice");
     }
   };
 
@@ -498,9 +562,9 @@ function SalesManagerPanel() {
         fetchInvoices(),
         fetchSalesData()
       ]);
-      showAlert("Date filter applied", "success");
+      showAlert("Date filter applied", "success", "dateFilter");
     } catch (error) {
-      showAlert("Failed to apply date filter", "danger");
+      showAlert("Failed to apply date filter", "danger", "dateFilter");
     }
   };
 
@@ -509,26 +573,35 @@ function SalesManagerPanel() {
     setStartDate("2024-01-01");
     setEndDate("2027-01-01");
     
-    // Wait for state update to complete
     setTimeout(async () => {
       try {
         await Promise.all([
           fetchInvoices(),
           fetchSalesData()
         ]);
-        showAlert("Date filter reset", "success");
+        showAlert("Date filter reset", "success", "dateFilter");
       } catch (error) {
-        showAlert("Failed to reset date filter", "danger");
+        showAlert("Failed to reset date filter", "danger", "dateFilter");
       }
     }, 0);
   };
 
-  // Show alert message
-  const showAlert = (text, type) => {
-    setAlertMessage({ show: true, text, type });
-    setTimeout(() => {
-      setAlertMessage({ show: false, text: "", type: "" });
-    }, 5000);
+  // Show alert message for specific section
+  const showAlert = (text, type, section) => {
+    const alertSetter = {
+      'price': setPriceAlert,
+      'discount': setDiscountAlert,
+      'refund': setRefundAlert,
+      'dateFilter': setDateFilterAlert,
+      'invoice': setInvoiceAlert
+    }[section];
+
+    if (alertSetter) {
+      alertSetter({ show: true, text, type });
+      setTimeout(() => {
+        alertSetter({ show: false, text: "", type: "" });
+      }, 5000);
+    }
   };
   
   // Function to check if user has sales access
@@ -627,14 +700,58 @@ function SalesManagerPanel() {
         Sales Manager Panel
       </h1>
       
-      {/* Alert message */}
-      {alertMessage.show && (
-        <div className={`alert alert-${alertMessage.type}`}>
-          {alertMessage.text}
+      {/* Date Range Filter */}
+      <div className="date-filter-container">
+        <div className="card mb-4">
+          <div className="card-header">
+            <h2>
+              <FontAwesomeIcon icon={faCalendarAlt} className="me-2" />
+              Date Range Filter
+            </h2>
+          </div>
+          <div className="card-body">
+            {dateFilterAlert.show && (
+              <div className={`alert alert-${dateFilterAlert.type} mb-3`}>
+                {dateFilterAlert.text}
+              </div>
+            )}
+            <div className="date-range-control">
+              <div className="date-inputs">
+                <div className="form-group">
+                  <label>Start Date</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={startDate}
+                    onChange={(e) => handleDateChange(e, setStartDate)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>End Date</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={endDate}
+                    onChange={(e) => handleDateChange(e, setEndDate)}
+                  />
+                </div>
+              </div>
+              <div className="button-group">
+                <button className="btn btn-primary" onClick={applyDateFilter}>
+                  <FontAwesomeIcon icon={faCheck} className="me-2" />
+                  Apply Filter
+                </button>
+                <button className="btn btn-secondary" onClick={resetDateFilter}>
+                  <FontAwesomeIcon icon={faUndoAlt} className="me-2" />
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+      </div>
       
-      {/* Invoices with Integrated Date Filter */}
+      {/* Invoices Section */}
       <div className="invoices-container">
         <div className="card">
           <div className="card-header">
@@ -650,24 +767,22 @@ function SalesManagerPanel() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Order ID</th>
+                    <th className="order-id-column">Order ID</th>
                     <th>Date</th>
-                    <th>Amount</th>
-                    <th>Invoice</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {invoices.map(invoice => (
-                    <tr key={invoice.orderId || invoice._id}>
-                      <td>{(invoice.orderId || invoice._id).substring(0, 8)}...</td>
+                    <tr key={invoice.orderId}>
+                      <td className="order-id-column">{invoice.orderId}</td>
                       <td>{new Date(invoice.createdAt).toLocaleDateString()}</td>
-                      <td>${invoice.total?.toFixed(2) || '0.00'}</td>
                       <td>
                         <button
                           className="btn btn-sm btn-primary"
-                          onClick={() => downloadInvoice(invoice.orderId || invoice._id)}
+                          onClick={() => downloadInvoice(invoice.invoiceUrl)}
                         >
-                          <FontAwesomeIcon icon={faDownload} /> Download
+                          <FontAwesomeIcon icon={faDownload} /> Download PDF
                         </button>
                       </td>
                     </tr>
@@ -675,40 +790,6 @@ function SalesManagerPanel() {
                 </tbody>
               </table>
             )}
-          </div>
-        </div>
-        
-        {/* Date Range Filter (Connected to Invoices) */}
-        <div className="date-filter-container">
-          <div className="date-range-control">
-            <div className="date-inputs">
-              <div className="form-group">
-                <label>Start Date</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={startDate}
-                  onChange={(e) => handleDateChange(e, setStartDate)}
-                />
-              </div>
-              <div className="form-group">
-                <label>End Date</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={endDate}
-                  onChange={(e) => handleDateChange(e, setEndDate)}
-                />
-              </div>
-            </div>
-            <div className="button-group">
-              <button className="btn btn-primary" onClick={applyDateFilter}>
-                Apply
-              </button>
-              <button className="btn btn-secondary" onClick={resetDateFilter}>
-                Reset
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -725,6 +806,11 @@ function SalesManagerPanel() {
               </h2>
             </div>
             <div className="card-body">
+              {priceAlert.show && (
+                <div className={`alert alert-${priceAlert.type} mb-3`}>
+                  {priceAlert.text}
+                </div>
+              )}
               <form onSubmit={handleSetPrice}>
                 <div className="mb-3">
                   <label className="form-label">Select Product</label>
@@ -769,6 +855,11 @@ function SalesManagerPanel() {
               </h2>
             </div>
             <div className="card-body">
+              {discountAlert.show && (
+                <div className={`alert alert-${discountAlert.type} mb-3`}>
+                  {discountAlert.text}
+                </div>
+              )}
               <form onSubmit={handleSetDiscount}>
                 <div className="mb-3">
                   <label className="form-label">Select Product</label>
@@ -804,54 +895,69 @@ function SalesManagerPanel() {
         </div>
       </div>
       
-      {/* Refund Requests - Using mock data as specified */}
-      <div className="card mb-4">
-        <div className="card-header">
-          <h2>
-            <FontAwesomeIcon icon={faUndoAlt} className="me-2" /> 
-            Refund Requests
-          </h2>
-        </div>
-        <div className="card-body">
-          {refundRequests.length === 0 ? (
-            <p className="text-center">No pending refund requests</p>
-          ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Product</th>
-                  <th>Amount</th>
-                  <th>Reason</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {refundRequests.map(refund => (
-                  <tr key={refund._id}>
-                    <td>{typeof refund.order === 'string' ? refund.order.substring(0, 8) : refund.order?.substring(0, 8)}...</td>
-                    <td>{refund.productName}</td>
-                    <td>${refund.amount?.toFixed(2) || '0.00'}</td>
-                    <td>{refund.reason}</td>
-                    <td>
-                      <button
-                        className="btn btn-sm btn-success me-1"
-                        onClick={() => handleAuthorizeRefund(refund._id)}
-                      >
-                        <FontAwesomeIcon icon={faCheck} /> Authorize
-                      </button>
-                      <button
-                        className="btn btn-sm btn-danger"
-                        onClick={() => handleRejectRefund(refund._id)}
-                      >
-                        <FontAwesomeIcon icon={faTimes} /> Reject
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+      {/* Refund Requests Section */}
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-header">
+              <h2>
+                <FontAwesomeIcon icon={faUndoAlt} className="me-2" /> 
+                Refund Requests
+              </h2>
+            </div>
+            <div className="card-body">
+              {refundAlert.show && (
+                <div className={`alert alert-${refundAlert.type} mb-3`}>
+                  {refundAlert.text}
+                </div>
+              )}
+              {refundRequests.length === 0 ? (
+                <p className="text-center">No pending refund requests</p>
+              ) : (
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Refund ID</th>
+                      <th>Product</th>
+                      <th>Quantity</th>
+                      <th>Total Amount</th>
+                      <th>Reason</th>
+                      <th>Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {refundRequests.map(refund => (
+                      <tr key={refund._id}>
+                        <td className="refund-id-column">{refund._id}</td>
+                        <td>{refund.items[0]?.product?.name || 'N/A'}</td>
+                        <td>{refund.items[0]?.quantity || 0}</td>
+                        <td>{formatCurrency(refund.totalRefundAmount || 0)}</td>
+                        <td>{refund.items[0]?.reason || 'No reason provided'}</td>
+                        <td>{new Date(refund.createdAt).toLocaleDateString()}</td>
+                        <td>
+                          <div className="d-flex gap-2">
+                            <button
+                              className="btn btn-sm btn-success action-button"
+                              onClick={() => handleAuthorizeRefund(refund._id)}
+                            >
+                              <FontAwesomeIcon icon={faCheck} /> Accept
+                            </button>
+                            <button
+                              className="btn btn-sm btn-danger action-button"
+                              onClick={() => handleRejectRefund(refund._id)}
+                            >
+                              <FontAwesomeIcon icon={faTimes} /> Reject
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
         </div>
       </div>
       
@@ -895,7 +1001,7 @@ function SalesManagerPanel() {
                     </div>
                   </div>
                   <div className="chart-legend">
-                    <span>Revenue Data ({salesData.labels[0]} - {salesData.labels[salesData.labels.length - 1]})</span>
+                    <span>Revenue Data for {startDate} to {endDate}</span>
                   </div>
                 </div>
               ) : (
@@ -931,7 +1037,7 @@ function SalesManagerPanel() {
                             className="chart-bar" 
                             style={{ 
                               height: `${getBarHeight(value, maxProfitValue)}px`,
-                              backgroundColor: '#28a745' 
+                              backgroundColor: value >= 0 ? '#28a745' : '#dc3545'
                             }}
                             title={`${salesData.labels[index]}: ${formatCurrency(value)}`}
                           >
@@ -943,7 +1049,7 @@ function SalesManagerPanel() {
                     </div>
                   </div>
                   <div className="chart-legend">
-                    <span>Profit Data ({salesData.labels[0]} - {salesData.labels[salesData.labels.length - 1]})</span>
+                    <span>Profit/Loss Data for {startDate} to {endDate}</span>
                   </div>
                 </div>
               ) : (
@@ -1021,6 +1127,73 @@ function SalesManagerPanel() {
           margin-top: 10px;
           font-size: 14px;
           color: #666;
+        }
+
+        /* Date Filter Styles */
+        .date-filter-container {
+          margin-bottom: 1rem;
+        }
+        .date-range-control {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        .date-inputs {
+          display: flex;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+        .date-inputs .form-group {
+          flex: 1;
+          min-width: 200px;
+          margin-bottom: 0;
+        }
+        .button-group {
+          display: flex;
+          gap: 1rem;
+          justify-content: flex-end;
+          margin-top: 0.5rem;
+        }
+        .button-group button {
+          min-width: 120px;
+          padding: 0.375rem 0.75rem;
+        }
+        .date-filter-container .card-body {
+          padding: 1rem;
+        }
+        .date-filter-container .card-header {
+          padding: 0.75rem 1rem;
+        }
+        .date-filter-container .form-group label {
+          margin-bottom: 0.25rem;
+        }
+        @media (max-width: 768px) {
+          .date-inputs {
+            flex-direction: column;
+          }
+          .button-group {
+            flex-direction: column;
+          }
+          .button-group button {
+            width: 100%;
+          }
+        }
+
+        /* Table styles */
+        .order-id-column {
+          width: 30%;
+          min-width: 200px;
+        }
+        .refund-id-column {
+          width: 25%;
+          min-width: 180px;
+        }
+        .table td {
+          vertical-align: middle;
+        }
+        .action-button {
+          min-width: 100px;
+          flex: 1;
         }
       `}</style>
     </div>
