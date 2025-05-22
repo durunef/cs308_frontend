@@ -80,19 +80,13 @@ export default function Checkout() {
       if (formattedValue.length > 0) {
         // Limit to 4 digits (MMYY)
         formattedValue = formattedValue.substring(0, 4);
-
-        if (formattedValue.length > 2) {
-          formattedValue =
-            formattedValue.substring(0, 2) +
-            '/' +
-            formattedValue.substring(2);
-        }
         
         // Add slash after 2 digits (MM/YY)
-        //if (formattedValue.length > 2) {
-        //  formattedValue = formattedValue.substring(0, 2) + '/' + formattedValue.substring(2);
-        if (formattedValue.length === 5) {  
+        if (formattedValue.length > 2) {
+          formattedValue = formattedValue.substring(0, 2) + '/' + formattedValue.substring(2);
+          
           // Validate expiry date
+          if (formattedValue.length === 5) {
           const [month, year] = formattedValue.split('/');
           const currentDate = new Date();
           const currentYear = currentDate.getFullYear() % 100; // Get last 2 digits of year
@@ -104,6 +98,7 @@ export default function Checkout() {
           if (expiryYear < currentYear || (expiryYear === currentYear && expiryMonth < currentMonth)) {
             setError('Card expiry date is invalid. Please enter a future date.');
             return;
+           }
           }
         }
       }
