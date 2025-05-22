@@ -80,11 +80,18 @@ export default function Checkout() {
       if (formattedValue.length > 0) {
         // Limit to 4 digits (MMYY)
         formattedValue = formattedValue.substring(0, 4);
+
+        if (formattedValue.length > 2) {
+          formattedValue =
+            formattedValue.substring(0, 2) +
+            '/' +
+            formattedValue.substring(2);
+        }
         
         // Add slash after 2 digits (MM/YY)
-        if (formattedValue.length > 2) {
-          formattedValue = formattedValue.substring(0, 2) + '/' + formattedValue.substring(2);
-          
+        //if (formattedValue.length > 2) {
+        //  formattedValue = formattedValue.substring(0, 2) + '/' + formattedValue.substring(2);
+        if (formattedValue.length === 5) {  
           // Validate expiry date
           const [month, year] = formattedValue.split('/');
           const currentDate = new Date();
