@@ -15,28 +15,109 @@
 }
 
 .sidebar {
-  width: 280px;
+  width: 320px;
   flex-shrink: 0;
   margin-right: var(--spacing-md);
 }
 
 .sidebar-filters {
-  background-color: var(--color-bg);
-  border-radius: var(--radius-card);
-  padding: var(--spacing-lg);
-  box-shadow: var(--shadow-sm);
-  border: none;
+  background: linear-gradient(145deg, #f9f5f1 0%, #f5f0e8 50%, #f0e8d8 100%);
+  border-radius: 20px;
+  padding: var(--spacing-xl);
+  box-shadow: 
+    0 20px 40px rgba(139, 69, 19, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(139, 69, 19, 0.2);
+  position: sticky;
+  top: var(--spacing-md);
+  overflow: hidden;
+}
+
+/* Coffee Bean Pattern Background */
+.sidebar-filters::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 20%, rgba(139, 69, 19, 0.08) 2px, transparent 2px),
+    radial-gradient(circle at 80% 40%, rgba(160, 82, 45, 0.06) 1px, transparent 1px),
+    radial-gradient(circle at 40% 80%, rgba(139, 69, 19, 0.04) 1.5px, transparent 1.5px);
+  background-size: 40px 40px, 30px 30px, 50px 50px;
+  background-position: 0 0, 15px 15px, 25px 25px;
+  opacity: 0.4;
+  z-index: 0;
+}
+
+.sidebar-filters > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Coffee Steam Animation */
+.sidebar-filters::after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(to top, transparent, rgba(139, 69, 19, 0.3), transparent);
+  border-radius: 2px;
+  animation: steam 3s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes steam {
+  0%, 100% { 
+    opacity: 0.3; 
+    transform: translateY(0) scale(1);
+  }
+  50% { 
+    opacity: 0.8; 
+    transform: translateY(-10px) scale(1.2);
+  }
 }
 
 .sidebar-filters h2 {
   margin-top: 0;
-  margin-bottom: var(--spacing-md);
-  font-size: var(--font-size-lg);
-  color: var(--color-primary);
-  padding-bottom: var(--spacing-xs);
-  border-bottom: 2px solid var(--color-primary);
-  font-family: var(--font-heading);
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-xl);
+  color: #6f4e37;
+  font-family: var(--font-body);
   font-weight: var(--font-weight-bold);
+  text-align: center;
+  position: relative;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+  letter-spacing: 1px;
+}
+
+.sidebar-filters h2::before {
+  content: '☕';
+  position: absolute;
+  left: -40px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+  animation: coffeeRotate 4s ease-in-out infinite;
+}
+
+.sidebar-filters h2::after {
+  content: '☕';
+  position: absolute;
+  right: -40px;
+  top: 50%;
+  transform: translateY(-50%) scaleX(-1);
+  font-size: 24px;
+  animation: coffeeRotate 4s ease-in-out infinite reverse;
+}
+
+@keyframes coffeeRotate {
+  0%, 100% { transform: translateY(-50%) rotate(0deg); }
+  25% { transform: translateY(-55%) rotate(5deg); }
+  75% { transform: translateY(-45%) rotate(-5deg); }
 }
 
 .content-area {
@@ -136,67 +217,205 @@
   justify-content: center;
 }
 
-/* Filter Panel */
+/* Coffee-Themed Filter Panel */
 .filter-group {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
   position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(249, 245, 241, 0.8) 100%);
+  border-radius: 15px;
+  padding: var(--spacing-lg);
+  border: 1px solid rgba(139, 69, 19, 0.2);
+  transition: all 0.4s ease;
+  backdrop-filter: blur(5px);
+}
+
+.filter-group:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 245, 241, 1) 100%);
+  transform: translateY(-3px);
+  box-shadow: 
+    0 8px 25px rgba(139, 69, 19, 0.2),
+    0 0 0 1px rgba(139, 69, 19, 0.3);
+}
+
+/* Coffee Bean Icons for Each Filter */
+.filter-group:nth-child(2)::before { content: '🫘'; } /* Product Type */
+.filter-group:nth-child(3)::before { content: '🌱'; } /* Subtype */
+.filter-group:nth-child(4)::before { content: '💰'; } /* Price Range */
+
+.filter-group::before {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+  font-size: 20px;
+  opacity: 0.6;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
 }
 
 .filter-group label {
   display: block;
-  margin-bottom: 8px;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-md);
+  font-weight: 500;
+  color: #6f4e37;
   font-size: var(--font-size-sm);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1.2px;
+  position: relative;
+  font-family: var(--font-body);
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* Coffee-themed accent lines */
+.filter-group label::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 20px;
+  background: linear-gradient(180deg, #8B4513 0%, #CD853F  50%, #D2B48C 100%);
+  border-radius: 3px;
+  box-shadow: 
+    inset 1px 0 0 rgba(255, 255, 255, 0.3),
+    2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .filter-select,
 .price-input {
   width: 100%;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border: 1px solid var(--color-bg-dark);
-  border-radius: var(--radius-input);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 2px solid rgba(139, 69, 19, 0.2);
+  border-radius: 12px;
   font-size: var(--font-size-base);
-  font-family: inherit;
-  background-color: var(--color-bg);
-  color: var(--color-text-primary);
-  transition: border-color 0.2s;
+  font-family: var(--font-body);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 245, 241, 1) 100%);
+  color: #6f4e37;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
 }
 
 .filter-select:focus,
 .price-input:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: #8b5a2b;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 1) 0%, rgba(249, 245, 241, 1) 100%);
+  box-shadow: 
+    0 0 0 3px rgba(139, 90, 43, 0.2),
+    inset 0 2px 4px rgba(139, 69, 19, 0.1);
+  color: #333;
+}
+
+.filter-select:hover,
+.price-input:hover {
+  border-color: rgba(139, 90, 43, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Custom select arrow for coffee theme */
+.filter-select {
+  appearance: none;
+  background-image: 
+    linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(249, 245, 241, 1) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%236f4e37' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: auto, 20px;
+  padding-right: 40px;
 }
 
 .price-inputs {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-md);
 }
 
 .price-inputs span {
-  color: var(--color-text-secondary);
+  color: #8b5a2b;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-base);
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+  font-family: var(--font-body);
 }
 
+/* Coffee Cup Reset Button */
 .reset-filters-button {
-  padding: var(--spacing-sm);
-  background: none;
-  border: 1px solid var(--color-bg-dark);
-  border-radius: var(--radius-button);
-  color: var(--color-text-primary);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: linear-gradient(145deg, #8b5a2b 0%, #6f4e37 50%, #5d3e2a 100%);
+  border: none;
+  border-radius: 15px;
+  color: #FFFFFF;
   cursor: pointer;
-  font-family: inherit;
-  font-weight: var(--font-weight-medium);
+  font-family: var(--font-body);
+  font-weight: var(--font-weight-bold);
   width: 100%;
-  margin-top: var(--spacing-lg);
-  transition: background-color 0.2s;
+  margin-top: var(--spacing-xl);
+  transition: all 0.4s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+  font-size: var(--font-size-base);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 6px 20px rgba(139, 90, 43, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.reset-filters-button::before {
+  content: '☕ ';
+  margin-right: 8px;
+  animation: bounce 2s infinite;
+}
+
+.reset-filters-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s;
+}
+
+.reset-filters-button:hover::after {
+  left: 100%;
 }
 
 .reset-filters-button:hover {
-  background-color: var(--color-bg-dark);
+  transform: translateY(-3px);
+  box-shadow: 
+    0 10px 30px rgba(139, 90, 43, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: linear-gradient(145deg, #6f4e37 0%, #8b5a2b 50%, #a0693d 100%);
+}
+
+.reset-filters-button:active {
+  transform: translateY(-1px);
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-3px); }
+  60% { transform: translateY(-2px); }
+}
+
+/* Coffee Shop Ambiance */
+.filter-group:nth-child(2) {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(249, 245, 241, 0.9) 100%);
+}
+
+.filter-group:nth-child(3) {
+  background: linear-gradient(135deg, rgba(240, 248, 238, 0.8) 0%, rgba(245, 250, 243, 0.9) 100%);
+}
+
+.filter-group:nth-child(4) {
+  background: linear-gradient(135deg, rgba(255, 252, 240, 0.8) 0%, rgba(250, 247, 235, 0.9) 100%);
 }
 
 /* Results */
@@ -264,6 +483,30 @@
   }
 }
 
+/* Coffee Loading Animation for Filter Groups */
+@keyframes filterBrew {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateY(10px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.filter-group {
+  animation: filterBrew 0.8s ease-out forwards;
+}
+
+.filter-group:nth-child(2) { animation-delay: 0.1s; }
+.filter-group:nth-child(3) { animation-delay: 0.2s; }
+.filter-group:nth-child(4) { animation-delay: 0.3s; }
+
 /* Mobile styles */
 @media (max-width: 768px) {
   .main-content {
@@ -277,7 +520,18 @@
   }
   
   .sidebar-filters {
+    padding: var(--spacing-lg);
+    position: static;
+  }
+  
+  .filter-group {
+    margin-bottom: var(--spacing-md);
     padding: var(--spacing-md);
+  }
+  
+  .sidebar-filters h2::before,
+  .sidebar-filters h2::after {
+    display: none;
   }
   
   .product-grid {

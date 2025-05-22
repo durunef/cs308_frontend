@@ -55,13 +55,16 @@
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-md); /* Increased gap between label and input */
+  margin-bottom: var(--spacing-md); /* Added margin between form groups */
 }
 
 .form-group label {
   font-family: var(--font-body);
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-base);
+  display: block;
+  margin-bottom: var(--spacing-xs);
 }
 
 .input-with-icon {
@@ -70,16 +73,18 @@
 
 .input-icon {
   position: absolute;
-  left: var(--spacing-sm);
+  left: var(--spacing-md); /* Increased spacing from left edge */
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-text-primary);
   opacity: 0.6;
+  z-index: 1; /* Ensure icon appears above input */
 }
 
 .input-with-icon input {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) calc(var(--spacing-sm) * 3);
+  padding: var(--spacing-sm);
+  padding-left: calc(var(--spacing-md) * 3); /* Increased left padding */
   border: var(--border-size) solid var(--color-bg-dark);
   border-radius: var(--radius-input);
   font-family: var(--font-body);
@@ -105,6 +110,10 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
+}
+
+.remember-me label {
+  margin-left: var(--spacing-xs);
 }
 
 .forgot-password {
@@ -157,6 +166,22 @@
 .auth-alt-button:hover {
   background-color: rgba(255, 255, 255, 0.1);
   transform: translateX(5px);
+}
+
+/* Add an alternative solution with icon containers for better separation */
+.icon-container {
+  display: none; /* By default, don't use this solution */
+}
+
+/* Adding media query for responsive adjustments */
+@media (max-width: 480px) {
+  .input-with-icon input {
+    padding-left: calc(var(--spacing-md) * 4); /* Even more padding on smaller screens */
+  }
+  
+  .input-icon {
+    left: var(--spacing-sm); /* Adjust icon position on small screens */
+  }
 }
 
 @media (max-width: 768px) {
