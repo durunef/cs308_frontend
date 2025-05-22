@@ -30,12 +30,7 @@ export default function Login() {
   const [error, setError]       = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Show "please log in" if we were redirected here
-  useEffect(() => {
-    if (redirectTo && redirectTo !== "/") {
-      setInfo("Please login to continue");
-    }
-  }, [redirectTo]);
+  // Removed the useEffect that was setting the "Please login to continue" message
 
   const handleSubmit = async (e) => {
     e.preventDefault();
