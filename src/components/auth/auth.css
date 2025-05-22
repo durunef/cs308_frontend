@@ -6,7 +6,6 @@
   background-color: var(--color-bg-light);
 }
 
-
 .auth-main {
   flex: 2;
   background-color: var(--color-bg);
@@ -25,6 +24,39 @@
   justify-content: center;
   align-items: center;
   padding: var(--spacing-xl);
+}
+
+/* Make secondary section text lighter and more readable */
+.auth-secondary .auth-title {
+  color: #f5deb3;
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.auth-secondary .auth-subtitle {
+  color: #deb887;
+  font-family: var(--font-body);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.95;
+}
+
+.auth-secondary .auth-title {
+  color: #ffffff;
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.auth-secondary .auth-subtitle {
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.9;
 }
 
 .auth-content {
@@ -55,8 +87,8 @@
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md); /* Increased gap between label and input */
-  margin-bottom: var(--spacing-md); /* Added margin between form groups */
+  gap: var(--spacing-xs); /* Reduced gap between label and input */
+  margin-bottom: var(--spacing-md);
 }
 
 .form-group label {
@@ -69,34 +101,71 @@
 
 .input-with-icon {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .input-icon {
   position: absolute;
-  left: var(--spacing-md); /* Increased spacing from left edge */
+  left: 15px; /* Fixed positioning */
   top: 50%;
   transform: translateY(-50%);
   color: var(--color-text-primary);
   opacity: 0.6;
-  z-index: 1; /* Ensure icon appears above input */
+  z-index: 2;
+  font-size: 16px; /* Consistent icon size */
+  width: 16px; /* Fixed width for consistent spacing */
+  text-align: center;
 }
 
 .input-with-icon input {
   width: 100%;
   padding: var(--spacing-sm);
-  padding-left: calc(var(--spacing-md) * 3); /* Increased left padding */
+  padding-left: 50px; /* Enough space for icon + gap */
+  padding-right: var(--spacing-sm);
   border: var(--border-size) solid var(--color-bg-dark);
   border-radius: var(--radius-input);
   font-family: var(--font-body);
   font-size: var(--font-size-base);
   background-color: var(--color-bg-light);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  box-sizing: border-box;
+  text-indent: 0; /* Reset any text indentation */
 }
 
 .input-with-icon input:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(var(--color-primary), 0.2);
+}
+
+/* Show placeholder text positioned after the icon */
+.input-with-icon input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+  font-size: var(--font-size-base);
+  padding-left: 0; /* Ensure placeholder aligns with input text */
+}
+
+/* Cross-browser placeholder styling */
+.input-with-icon input::-webkit-input-placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.input-with-icon input::-moz-placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.input-with-icon input:-ms-input-placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.input-with-icon input:-moz-placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
 }
 
 .form-options {
@@ -151,8 +220,8 @@
   align-items: center;
   gap: var(--spacing-sm);
   background-color: transparent;
-  color: var(--color-primary-text);
-  border: 2px solid var(--color-primary-text);
+  color: #f5deb3;
+  border: 2px solid #deb887;
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-button);
   font-family: var(--font-button);
@@ -164,23 +233,26 @@
 }
 
 .auth-alt-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(245, 222, 179, 0.1);
   transform: translateX(5px);
+  color: #f5deb3;
+  border-color: #f5deb3;
 }
 
-/* Add an alternative solution with icon containers for better separation */
+/* Remove unused icon container styles */
 .icon-container {
-  display: none; /* By default, don't use this solution */
+  display: none;
 }
 
-/* Adding media query for responsive adjustments */
+/* Media queries for responsive design */
 @media (max-width: 480px) {
   .input-with-icon input {
-    padding-left: calc(var(--spacing-md) * 4); /* Even more padding on smaller screens */
+    padding-left: 45px; /* Adjusted for mobile */
   }
   
   .input-icon {
-    left: var(--spacing-sm); /* Adjust icon position on small screens */
+    left: 12px; /* Adjust icon position for smaller screens */
+    font-size: 14px; /* Slightly smaller icon on mobile */
   }
 }
 

@@ -30,7 +30,7 @@ export default function Login() {
   const [error, setError]       = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Show “please log in” if we were redirected here
+  // Show "please log in" if we were redirected here
   useEffect(() => {
     if (redirectTo && redirectTo !== "/") {
       setInfo("Please login to continue");
@@ -77,6 +77,7 @@ export default function Login() {
                   onChange={e => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   required
+                  style={{ paddingLeft: '50px' }}
                 />
               </div>
             </div>
@@ -94,6 +95,7 @@ export default function Login() {
                   placeholder="Enter your password"
                   required
                   minLength="5"
+                  style={{ paddingLeft: '50px' }}
                 />
               </div>
             </div>
@@ -125,5 +127,5 @@ export default function Login() {
         </div>
       </div>
     </div>
-);
+  );
 }

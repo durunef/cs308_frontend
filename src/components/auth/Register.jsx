@@ -88,6 +88,7 @@ function Register() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter your full name"
                   required
+                  style={{ paddingLeft: '50px' }}
                 />
               </div>
             </div>
@@ -103,6 +104,7 @@ function Register() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   required
+                  style={{ paddingLeft: '50px' }}
                 />
               </div>
             </div>
@@ -119,6 +121,7 @@ function Register() {
                   placeholder="Create a password"
                   required
                   minLength="5"
+                  style={{ paddingLeft: '50px' }}
                 />
               </div>
             </div>
@@ -135,6 +138,7 @@ function Register() {
                   placeholder="Confirm your password"
                   required
                   minLength="5"
+                  style={{ paddingLeft: '50px' }}
                 />
               </div>
             </div>
