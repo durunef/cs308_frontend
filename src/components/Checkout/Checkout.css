@@ -1,3 +1,6 @@
+/* src/components/Checkout/Checkout.css */
+/* Your existing CSS - keeping everything as is and only adding what's needed */
+
 .checkout-container {
   max-width: 800px;
   margin: 40px auto;
@@ -243,6 +246,14 @@
   text-align: left;
 }
 
+.order-details-card h2 {
+  color: var(--color-text-primary);
+  margin-bottom: 15px;
+  font-weight: 600;
+  font-family: var(--font-heading);
+  text-align: center;
+}
+
 .order-details-content {
   margin-top: 15px;
 }
@@ -254,6 +265,13 @@
 
 .invoice-container {
   margin: 30px 0;
+}
+
+.invoice-container h2 {
+  color: var(--color-text-primary);
+  margin-bottom: 15px;
+  font-weight: 600;
+  font-family: var(--font-heading);
 }
 
 .invoice-frame {
@@ -306,4 +324,4 @@
   .checkout-container {
     padding: 15px;
   }
-} 
+}

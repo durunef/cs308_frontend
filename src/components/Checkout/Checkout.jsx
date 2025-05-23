@@ -20,6 +20,10 @@ export default function Checkout() {
   const [invoiceUrl, setInvoiceUrl] = useState('');
   const [message, setMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // NEW: Add order success state
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const [orderDetails, setOrderDetails] = useState(null);
 
   // Load address from profile
   useEffect(() => {
@@ -86,7 +90,6 @@ export default function Checkout() {
           formattedValue = formattedValue.substring(0, 2) + '/' + formattedValue.substring(2);
           
           // Validate expiry date
-          if (formattedValue.length === 5) {
           const [month, year] = formattedValue.split('/');
           const currentDate = new Date();
           const currentYear = currentDate.getFullYear() % 100; // Get last 2 digits of year
@@ -98,7 +101,6 @@ export default function Checkout() {
           if (expiryYear < currentYear || (expiryYear === currentYear && expiryMonth < currentMonth)) {
             setError('Card expiry date is invalid. Please enter a future date.');
             return;
-           }
           }
         }
       }
@@ -125,7 +127,7 @@ export default function Checkout() {
   const processPayment = () =>
     new Promise(resolve => setTimeout(() => resolve({ success: true, transactionId: 'tx-'+Date.now() }), 1000));
 
-  // Complete order
+  // UPDATED: Complete order with better success handling
   const placeOrder = async e => {
     e.preventDefault();
     setError('');
@@ -191,16 +193,22 @@ export default function Checkout() {
       const orderId = orderData?._id;
       console.log('Extracted order ID:', orderId);
 
-      if (orderId) {
-        console.log('Navigating to order confirmation:', `/order-confirmation/${orderId}`);
-        // Force navigation using window.location
-        window.location.href = `/order-confirmation/${orderId}`;
-      } else {
-        console.error('No order ID found in response:', resp);
-        // Fallback to showing invoice in current page
-        setInvoiceUrl(resp.data?.data?.invoiceUrl);
-        setMessage('Your order has been successfully placed! Your invoice is shown below and has been sent to your email.');
+      // CHANGED: Instead of trying to navigate, show success page directly
+      setOrderSuccess(true);
+      setOrderDetails({
+        orderId: orderId || `ORD-${Date.now().toString().slice(-6)}`,
+        totalAmount: getCartTotalPrice(),
+        estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        email: form.email,
+        itemCount: cartItems.length
+      });
+      
+      if (resp.data?.data?.invoiceUrl) {
+        setInvoiceUrl(resp.data.data.invoiceUrl);
       }
+      
+      setMessage('Your order has been successfully placed! A confirmation email has been sent to your inbox.');
+      
     } catch (err) {
       console.error('Checkout error:', err);
       setError(err.response?.data?.message || err.message || 'Order processing error.');
@@ -228,8 +236,52 @@ export default function Checkout() {
     );
   };
 
-  // If invoice URL exists, show confirmation page
-  if (invoiceUrl) {
+  // CHANGED: Show success page when order is successful
+  if (orderSuccess) {
+    return (
+      <div className="checkout-container">
+        <div className="order-success-card">
+          <div className="success-icon">✓</div>
+          <h1>Thank You!</h1>
+          <p className="success-message">{message}</p>
+          
+          <div className="order-details-card">
+            <h2>Order Summary</h2>
+            <div className="order-details-content">
+              <p>Order ID: <strong>{orderDetails?.orderId}</strong></p>
+              <p>Total Amount: <strong>${orderDetails?.totalAmount?.toFixed(2)}</strong></p>
+              <p>Email: <strong>{orderDetails?.email}</strong></p>
+              <p>Items: <strong>{orderDetails?.itemCount}</strong></p>
+              <p>Estimated Delivery: <strong>{orderDetails?.estimatedDelivery}</strong></p>
+            </div>
+          </div>
+          
+          {invoiceUrl && (
+            <div className="invoice-container">
+              <h2>Your Invoice</h2>
+              <iframe
+                title="Invoice"
+                src={invoiceUrl}
+                width="100%"
+                height="500px"
+                className="invoice-frame"
+              />
+            </div>
+          )}
+          
+          <button 
+            className="continue-shopping-btn"
+            onClick={() => navigate('/')}
+          >
+            Continue Shopping
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // If invoice URL exists, show confirmation page (KEPT for backward compatibility)
+  if (invoiceUrl && !orderSuccess) {
     return (
       <div className="checkout-container">
         <div className="order-success-card">
