@@ -28,7 +28,7 @@ function ProductInfo() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const { user, isAuthenticated, token } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,7 +37,6 @@ function ProductInfo() {
   const [quantity, setQuantity] = useState(1);
   const [reviews, setReviews] = useState([]);
   const [userReview, setUserReview] = useState({ rating: 0, comment: "" });
-  const [hasUserBought, setHasUserBought] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
@@ -116,26 +115,6 @@ function ProductInfo() {
       console.error("Error in username fetching process:", err);
     }
   };
-  
-  // Check if user has bought this product
-  useEffect(() => {
-    const checkUserPurchase = async () => {
-      if (!user) return;
-      
-      try {
-        const response = await axios.get(`${API_URL}/user/${user.id}/purchased-products`);
-        
-        if (response.data.status === "success") {
-          const hasBought = response.data.data.some(p => p.productId === productId);
-          setHasUserBought(hasBought);
-        }
-      } catch (err) {
-        console.error("Error checking purchase history:", err);
-      }
-    };
-    
-    checkUserPurchase();
-  }, [user, productId]);
   
   const handleQuantityChange = (change) => {
     const newQuantity = quantity + change;
@@ -308,7 +287,9 @@ function ProductInfo() {
           <div className="product-main-image">
             <img 
               src={productWithDefaults.images && productWithDefaults.images.length > 0 
-                ? `${API_URL}${productWithDefaults.images[selectedImage]}` 
+                ? (productWithDefaults.images[selectedImage].startsWith('/uploads') || productWithDefaults.images[selectedImage].startsWith('/images')
+                   ? `${API_URL}${productWithDefaults.images[selectedImage]}`
+                   : productWithDefaults.images[selectedImage])
                 : "https://via.placeholder.com/600x400?text=No+Image+Available"} 
               alt={productWithDefaults.name} 
             />
@@ -319,7 +300,9 @@ function ProductInfo() {
               {productWithDefaults.images.map((image, index) => (
                 <img 
                   key={index}
-                  src={`${API_URL}${image}`}
+                  src={image.startsWith('/uploads') || image.startsWith('/images')
+                       ? `${API_URL}${image}`
+                       : image}
                   alt={`${productWithDefaults.name} - view ${index+1}`}
                   className={selectedImage === index ? "active" : ""}
                   onClick={() => setSelectedImage(index)}
@@ -497,7 +480,7 @@ function ProductInfo() {
           </div>
         </div>
         
-        {hasUserBought && (
+        {isAuthenticated && (
           <div className="review-form-container">
             <h3>Write a Review</h3>
             <form onSubmit={handleReviewSubmit} className="review-form">

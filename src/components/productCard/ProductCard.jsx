@@ -140,7 +140,11 @@ function ProductCard({ product }) {
     <div className={`product-card ${hasDiscount ? 'discounted' : ''}`} onClick={navigateToProductInfo}>
       <div className="product-card-image-container">
         <img 
-          src={product.image ? `${API_URL}${product.image}` : 'https://via.placeholder.com/300x300?text=No+Image'} 
+          src={product.image 
+              ? (product.image.startsWith('/uploads') || product.image.startsWith('/images')
+                 ? `${API_URL}${product.image}`
+                 : product.image)
+              : 'https://via.placeholder.com/300x300?text=No+Image'} 
           alt={product.name} 
           className="product-image"
         />

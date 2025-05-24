@@ -249,15 +249,15 @@ export const requestRefund = async (orderId, items) => {
 export const getRefundStatus = async (refundId) => {
   try {
     console.log('Fetching refund status for:', refundId);
-    const response = await axios.get(`/api/sales/refunds/${refundId}`);
+    const response = await axios.get(`/api/orders/refund/${refundId}`);
     console.log('Refund status response:', response.data);
     
-    if (!response.data || !response.data.data) {
+    if (!response.data || !response.data.refund) {
       console.error('Invalid refund status response:', response.data);
       throw new Error('Invalid refund status response format');
     }
     
-    return response.data.data;
+    return response.data;
   } catch (error) {
     console.error('Error fetching refund status:', error.response || error);
     throw error;

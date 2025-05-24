@@ -48,6 +48,11 @@ function OrderHistory() {
   const fetchRefundStatus = async (refundId) => {
     try {
       console.log('Fetching refund status for order with refundId:', refundId);
+      // Check if refundId is a valid string
+      if (!refundId || typeof refundId !== 'string') {
+        console.error('Invalid refundId:', refundId);
+        return;
+      }
       const refundData = await getRefundStatus(refundId);
       console.log('Received refund data:', refundData);
       
@@ -82,7 +87,7 @@ function OrderHistory() {
       // Fetch refund status for each order that has a refund request
       console.log('Checking orders for refund requests:', ordersResponse);
       const refundPromises = ordersResponse
-        .filter(order => order && order.refundId) // Add null check
+        .filter(order => order && order.refundId && typeof order.refundId === 'string') // Add type check
         .map(async (order) => {
           console.log('Found order with refundId:', order.refundId);
           await fetchRefundStatus(order.refundId);
@@ -622,6 +627,9 @@ function OrderHistory() {
                       <div className="refund-details">
                         <p>Total Refund Amount: ${refundRequests[order._id].totalRefundAmount.toFixed(2)}</p>
                         <p>Requested on: {new Date(refundRequests[order._id].createdAt).toLocaleDateString()}</p>
+                        {refundRequests[order._id].approvedAt && (
+                          <p>Approved on: {new Date(refundRequests[order._id].approvedAt).toLocaleDateString()}</p>
+                        )}
                       </div>
                     </div>
                   )}
